@@ -1,26 +1,153 @@
 @import "tailwindcss";
 
+/*
+  Visual identity: a dark PCB-green base with copper accents, the way a motherboard looks.
+  Spec values use a monospace face (they are data), headings use a condensed industrial face.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #07100e;
+  --surface: #0d1a17;
+  --raised: #13251f;
+  --line: #23403a;
+  --line-soft: #172c27;
+  --text: #e9f0ea;
+  --muted: #92aba2;
+  --copper: #e0a05a;
+  --copper-strong: #f2b877;
+  --copper-ink: #1b1106;
+  --ok: #62d6a0;
+  --warn: #e8c14a;
+  --bad: #ec8080;
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-copper: var(--copper);
+  --color-copper-strong: var(--copper-strong);
+  --color-copper-ink: var(--copper-ink);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --font-display: var(--font-display), "Arial Narrow", sans-serif;
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  line-height: 1.05;
+}
+
+:focus-visible {
+  outline: 2px solid var(--copper-strong);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--copper);
+  color: var(--copper-ink);
+}
+
+@layer components {
+  .btn, .btn-primary, .btn-secondary, .btn-danger {
+    display: inline-flex;
+    min-height: var(--btn-h, 2.75rem);
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    padding: 0.5rem var(--btn-px, 1.25rem);
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .btn-sm { --btn-h: 2.25rem; --btn-px: 0.75rem; font-size: 0.875rem; }
+  .btn-primary { background: var(--copper); color: var(--copper-ink); }
+  .btn-primary:hover:not(:disabled) { background: var(--copper-strong); }
+  .btn-secondary { background: var(--surface); border-color: var(--line); color: var(--text); }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--copper); color: var(--copper-strong); }
+  .btn-danger { background: transparent; border-color: color-mix(in srgb, var(--bad) 50%, transparent); color: var(--bad); }
+  .btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--bad) 12%, transparent); }
+  .btn:disabled, .btn-primary:disabled, .btn-secondary:disabled, .btn-danger:disabled { cursor: not-allowed; opacity: 0.5; }
+
+  .field {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 0.375rem;
+    background: var(--bg);
+    color: var(--text);
+    padding: 0.625rem 0.75rem;
+  }
+  .field::placeholder { color: color-mix(in srgb, var(--muted) 70%, transparent); }
+  .field:focus { border-color: var(--copper); outline: none; }
+  .field[aria-invalid="true"] { border-color: var(--bad); }
+  .label { display: block; margin-bottom: 0.375rem; font-size: 0.875rem; font-weight: 500; color: var(--text); }
+  .hint { margin-top: 0.25rem; font-size: 0.875rem; color: var(--muted); }
+  .error-text { margin-top: 0.25rem; font-size: 0.875rem; color: var(--bad); }
+  .panel { border: 1px solid var(--line); border-radius: 0.5rem; background: var(--surface); }
+  .container-page { margin-inline: auto; width: 100%; max-width: 72rem; padding-inline: 1rem; }
+  @media (min-width: 640px) { .container-page { padding-inline: 1.5rem; } }
+  .spec-value { font-family: var(--font-mono); font-size: 0.85rem; }
+}
+
+/* Trace lines: the one decorative device. Drawn once in the hero, then used as quiet section dividers. */
+.trace-divider {
+  height: 14px;
+  background-image:
+    linear-gradient(var(--line), var(--line)),
+    radial-gradient(circle, var(--copper) 0 2.5px, transparent 3px);
+  background-repeat: no-repeat;
+  background-size: 100% 1px, 14px 14px;
+  background-position: 0 50%, 0 50%;
+  opacity: 0.8;
+}
+
+.trace-draw path {
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: trace 2.2s ease-out 0.2s forwards;
+}
+@keyframes trace {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .trace-draw path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }
