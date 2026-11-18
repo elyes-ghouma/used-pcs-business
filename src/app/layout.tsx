@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: { default: "Used Gaming PCs", template: "%s" },
   description: "Tested used gaming PCs and components.",
+  icons: { icon: "/icon" },
   openGraph: { type: "website", siteName: "Used Gaming PCs" },
   robots: { index: true, follow: true },
 };
