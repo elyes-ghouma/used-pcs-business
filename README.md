@@ -92,11 +92,22 @@ The catalog starts empty, with no demo data. Sections such as *Why buy from us* 
 
 - **Unit / logic** (`tests/unit`): chatbot (budget, availability, comparison, "never invents data"), validation, price formatting, contact links, image signature checks, rate limiting.
 - **Database** (`tests/db`): applies the real migration files to PGlite and verifies RLS (anon and non-admin users are blocked), admin-only functions, one active sale per product, status guard + history, voiding sales, revenue maths, inquiry validation and rate limits, chat tokens and escalation, bucket limits. Runs in CI with no secrets.
-- **End-to-end** (`e2e`): Playwright drives a real browser through the public site, admin login/logout, product creation with a photo, reserving, inquiry → admin, chat → admin reply → visitor, recording a sale, and the duplicate-sale guard. It needs a **test** Supabase project: apply the migrations, create an admin there, and set `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` in `.env.local`. Do not point it at your live shop (it creates and removes records prefixed `E2E`).
+- **End-to-end** (`e2e`): Playwright drives a real browser through the public site, admin login/logout, product creation with a photo, reserving, inquiry → admin, chat → admin reply → visitor, recording a sale, and the duplicate-sale guard. It needs a **test** Supabase project: apply the migrations, create an admin there, and set `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` in `.env.local`. Do not point it at your live shop (it creates records prefixed `E2E`).
 
   ```bash
   npx playwright install chromium
   npm run test:e2e
+  ```
+
+  Without any Supabase variables, the database-free part still runs (layout on desktop and phone, no horizontal scroll, form validation, sitemap/robots): `npx playwright test e2e/public.spec.ts --grep-invert "chat widget"`. Admin tests are skipped unless the `E2E_*` variables are set; the admin tests sign in once and reuse the session.
+
+  **Cleanup.** The e2e run voids its sale and *archives* its PC (a PC that ever had a sale can't be deleted, by design). It also leaves a few `E2E ...` inquiries, a chat conversation and click events behind. On the test project you can remove them in the SQL Editor:
+
+  ```sql
+  delete from public.inquiries where name like 'E2E %';
+  delete from public.conversations where visitor_name like 'E2E %';
+  delete from public.sales where product_name like 'E2E %';
+  delete from public.products where name like 'E2E %';
   ```
 
 ## GitHub Actions
