@@ -10,6 +10,7 @@ import { OG_LOCALE } from "@/i18n/config";
 import { localizeProduct } from "@/i18n/content";
 import { getPublicSettings, getT } from "@/i18n/server";
 import { getProductBySlug, sortImages } from "@/lib/data";
+import { jsonLdString } from "@/lib/json-ld";
 import { formatDate, formatPrice } from "@/lib/format";
 import { mediaUrl } from "@/lib/supabase/public";
 import { SPEC_FIELDS } from "@/lib/types";
@@ -82,7 +83,7 @@ export default async function ProductPage({ params }: { params: Params }) {
   return (
     <div className="container-page py-8">
       <SetChatProduct product={{ id: product.id, name: product.name, slug: product.slug }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
       <nav aria-label={t("product.breadcrumb")} className="mb-5 text-sm text-muted">
         <Link href="/catalog" className="hover:text-text">{t("product.catalog")}</Link> <span aria-hidden>/</span> <span className="text-text">{product.name}</span>
       </nav>

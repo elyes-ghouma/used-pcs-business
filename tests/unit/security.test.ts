@@ -1,4 +1,6 @@
 // @vitest-environment node
+import { jsonLdString } from "@/lib/json-ld";
+import { ADMIN_SESSION_MAX_HOURS, isAdminSessionFresh, passwordSignInTime } from "@/lib/session";
 import { describe, expect, it, vi } from "vitest";
 import sharp from "sharp";
 import { validatePassword } from "@/lib/password";
@@ -102,5 +104,56 @@ describe("request hygiene helpers", () => {
     expect(await readJsonLimited(post("x".repeat(9000)))).toBeNull();
     expect(await readJsonLimited(post("{broken"))).toBeNull();
     expect(await readJsonLimited(post(""))).toBeNull();
+  });
+});
+
+describe("JSON-LD cannot break out of its script tag", () => {
+  const hostile = {
+    name: "</script><script>alert(1)</script>",
+    description: "<!-- <script> --> \u2028 line\u2029separator </SCRIPT >",
+    nested: { list: ["<img src=x onerror=alert(1)>"] },
+  };
+
+  it("never emits a literal '<' or the JS line separators", () => {
+    const out = jsonLdString(hostile);
+    expect(out).not.toContain("<");
+    expect(out).not.toMatch(/[\u2028\u2029]/);
+    expect(out.toLowerCase()).not.toContain("</script");
+  });
+
+  it("is still valid JSON that reads back to the original data", () => {
+    expect(JSON.parse(jsonLdString(hostile))).toEqual(hostile);
+  });
+});
+
+describe("admin session lifetime", () => {
+  const HOUR = 3_600_000;
+  const now = Date.UTC(2026, 10, 18, 12, 0, 0);
+  const amr = (hoursAgo: number) => [{ method: "password", timestamp: Math.floor((now - hoursAgo * HOUR) / 1000) }];
+  const iso = (hoursAgo: number) => new Date(now - hoursAgo * HOUR).toISOString();
+
+  it("is 12 hours", () => expect(ADMIN_SESSION_MAX_HOURS).toBe(12));
+
+  it("accepts a session 11h59m after the password was entered and refuses it 12h01m after", () => {
+    expect(isAdminSessionFresh(passwordSignInTime(amr(11.98), null), now)).toBe(true);
+    expect(isAdminSessionFresh(passwordSignInTime(amr(12.02), null), now)).toBe(false);
+  });
+
+  it("refreshing a token cannot extend it: the amr time wins over a newer last_sign_in_at", () => {
+    const t = passwordSignInTime(amr(13), iso(0.1));
+    expect(t).toBe(Math.floor((now - 13 * HOUR) / 1000) * 1000);
+    expect(isAdminSessionFresh(t, now)).toBe(false);
+  });
+
+  it("falls back to last_sign_in_at when the token has no password amr entry", () => {
+    expect(isAdminSessionFresh(passwordSignInTime(undefined, iso(2)), now)).toBe(true);
+    expect(isAdminSessionFresh(passwordSignInTime([{ method: "otp", timestamp: 1 }], iso(20)), now)).toBe(false);
+    expect(isAdminSessionFresh(passwordSignInTime(["pwd"], iso(1)), now)).toBe(true);
+  });
+
+  it("denies when the sign-in time is unknown or malformed", () => {
+    expect(isAdminSessionFresh(passwordSignInTime(undefined, null), now)).toBe(false);
+    expect(isAdminSessionFresh(passwordSignInTime("nonsense", "not a date"), now)).toBe(false);
+    expect(isAdminSessionFresh(passwordSignInTime([{ method: "password", timestamp: "x" }], undefined), now)).toBe(false);
   });
 });

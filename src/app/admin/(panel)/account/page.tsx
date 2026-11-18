@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ChangePasswordForm } from "@/components/admin/PasswordForms";
-import { ADMIN_SESSION_MAX_HOURS, requireAdmin } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
+import { ADMIN_SESSION_MAX_HOURS } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Account" };
 
