@@ -33,7 +33,8 @@ test.describe("response headers", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).not.toContain("unsafe-eval");
-    expect(csp).not.toMatch(/script-src[^;]*https?:\/\/(?!ydeippvwmkeruzrxmisl)/); // no third-party script hosts
+    const ownHost = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://example.supabase.co").hostname.replaceAll(".", "\\.");
+    expect(csp).not.toMatch(new RegExp(`script-src[^;]*https?://(?!${ownHost})`)); // no third-party script hosts
   });
 
   test("admin and API responses are never cached", async ({ request }) => {

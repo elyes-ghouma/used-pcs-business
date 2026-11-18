@@ -1,12 +1,31 @@
-# Used Gaming PCs: storefront and admin dashboard
+# Used Gaming PCs: bilingual storefront, chatbot and admin dashboard
 
-A complete website for a business that sells used gaming PCs and components.
+[![CI](https://github.com/elyes-ghouma/used-pcs-business/actions/workflows/ci.yml/badge.svg)](https://github.com/elyes-ghouma/used-pcs-business/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-- **Public website**: homepage, searchable catalog, shareable product pages, contact form, floating chat (database-powered chatbot + contact the seller).
-- **Admin dashboard** (`/admin`): products and photos, stock status, manual sales records, inquiries, chat inbox with replies, and every business setting (name, logo, contacts, currency, policies, FAQ).
+An open-source website for a small shop that sells used gaming PCs and components: a responsive public storefront in **English and French**, a rule-based **chatbot** that answers only from the shop's own data, and an **admin dashboard** for stock, sales, inquiries and live chat. It runs on Next.js, Supabase and Vercel.
+
+It was built as a complete, security-minded starter. The shop type is a detail (PCs here), and the structure suits any small business with a catalog, a contact form and a person answering customers.
+
+> **Status:** a working project that was deployed and tested end to end, not a hosted product. No warranty (see [LICENSE](LICENSE)). Read [`SECURITY.md`](SECURITY.md), including what is **not** protected, before you put real customer data in it.
+
+## Features
+
+- **Public website**: homepage with live stock, searchable and filterable catalog, shareable product pages (photos, specs, status), contact form, floating chat. Mobile first, keyboard accessible, no horizontal scroll.
+- **English and French**: the browser's language is detected, a visitor can switch with EN / FR, and the owner chooses the default. Owner-written text (headline, policies, FAQ, product descriptions) has an optional French version. The admin area stays in English.
+- **Chatbot, no AI service**: understands English and French, answers from the database (budget, availability, specs, comparisons, delivery and warranty text, FAQ), never invents specs, prices or terms, and hands over to the owner when it has no answer. When the owner replies, the bot stops.
+- **Admin dashboard** (`/admin`): products and photos, stock status, manual sales records with history, inquiries, chat inbox with live updates and replies, every business setting, audit log.
 - **No online payments.** Customers contact the seller; the owner records finished sales in the dashboard.
+- **Security built in and tested**: all rules enforced in the database (Row Level Security, grants, constraints, triggers), a server-only gateway key for public writes, database-side rate limits, re-encoded image uploads, strict headers and CSP, audit log, secret scanning in CI. See [Security](#security).
 
-Stack: Next.js 16 (App Router, TypeScript), Tailwind CSS 4, Supabase (PostgreSQL, Auth, Storage, Realtime), Zod, Vitest (with PGlite for SQL tests), Playwright.
+Stack: Next.js 16 (App Router, TypeScript), Tailwind CSS 4, Supabase (PostgreSQL, Auth, Storage, Realtime), Zod, Vitest (with PGlite for SQL tests), Playwright, GitHub Actions, Vercel.
+
+## Using it for your own shop
+
+1. Follow [Quick start](#quick-start-local) to run it locally with your own Supabase project. Nothing here points at anyone else's backend.
+2. Business name, logo, contacts, currency, policies and FAQ are edited in the dashboard, not in code. The default currency is `TND` and French prices use Tunisian formatting (`fr-TN`); change both in `src/i18n/config.ts` and `src/lib/data.ts` for other countries.
+3. Product fields (CPU, GPU, RAM, ...) are in `src/lib/types.ts` and `supabase/migrations`. Interface text is in `src/i18n/messages`. A native French speaker should read `fr.ts` before launch.
+4. The look is in `src/app/globals.css` (design tokens) and the components under `src/components`.
 
 ## What works immediately vs. what needs configuration
 
@@ -232,3 +251,7 @@ src/lib               data access, validation, chatbot engine, helpers
 supabase/migrations   database schema, RLS, functions, storage
 tests/                unit tests and SQL tests;  e2e/ Playwright
 ```
+
+## Contributing and license
+
+Issues and pull requests are welcome: see [`CONTRIBUTING.md`](CONTRIBUTING.md). Report vulnerabilities privately (see [`SECURITY.md`](SECURITY.md)). Released under the [MIT License](LICENSE).

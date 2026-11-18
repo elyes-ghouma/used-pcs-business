@@ -2,7 +2,7 @@
 
 This document describes how the application is protected, what was actually tested, and what is **not** protected or **not** tested. It does not claim the application is "completely secure": no real application is. The threat analysis is in [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
 
-Report a vulnerability privately to the shop owner or the maintainer; do not open a public issue with exploit details.
+**Reporting a vulnerability:** please use GitHub's private reporting (repository **Security** tab -> **Report a vulnerability**) and do not open a public issue with exploit details. If you run this project for a business, report to that business's owner.
 
 ## 1. Architecture in one picture
 

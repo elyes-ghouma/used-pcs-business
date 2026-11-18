@@ -51,7 +51,7 @@ describe("password policy", () => {
     ["password1234", "too common"],
     ["aaaaaaaaaaaaaa", "too few different"],
     ["1234567890123456", "simple sequence"],
-    ["Elyes123", "at least 12"],
+    ["Short-Pass1", "at least 12"],
   ])("rejects %s", (pw, msg) => expect(validatePassword(pw)).toContain(msg));
 
   it("rejects a password containing the email name", () => {
