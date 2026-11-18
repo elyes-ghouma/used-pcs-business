@@ -178,6 +178,18 @@ The catalog starts empty, with no demo data. Sections such as *Why buy from us* 
 
 Redeploy after changing any `NEXT_PUBLIC_*` variable (they are baked in at build time).
 
+### Continuous delivery (GitHub Actions)
+
+`.github/workflows/deploy.yml` deploys to Vercel production after CI passes on `main` (it builds the exact commit CI approved, then checks the live site). It stays idle until you add three repository secrets (GitHub -> Settings -> Secrets and variables -> Actions):
+
+| Secret | Where to find it |
+|---|---|
+| `VERCEL_TOKEN` | vercel.com/account/tokens (create one scoped to your team) |
+| `VERCEL_ORG_ID` | Vercel team Settings -> General (Team ID) |
+| `VERCEL_PROJECT_ID` | Vercel project Settings -> General (Project ID) |
+
+Optionally add the repository **variable** `PRODUCTION_URL` (your public address) to enable the post-deploy check. The app's own variables (Supabase, `GATEWAY_KEY`) stay in Vercel only. Vercel's built-in Git deployments would deploy the same commit a second time: once the secrets work, turn them off in Vercel (Project Settings -> Git -> *Ignored Build Step*: `exit 0`, or disconnect the repository) so GitHub Actions is the only deployer. A failing CI run then blocks the release, which Vercel's own integration would not do.
+
 ## Security
 
 The application treats the browser and the public Supabase key as untrusted: every rule is enforced in the database (RLS, grants, constraints, triggers), public write endpoints need a server-only gateway key and are rate limited in the database, uploads are re-encoded, all admin actions are re-authorised on the server and audited. **Read [`SECURITY.md`](SECURITY.md)** for the architecture, what was tested, the open risks and the production checklist, and [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) for the threat model. See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the schema and decisions.

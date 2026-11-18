@@ -1,0 +1,95 @@
+name: Deploy
+
+# Continuous delivery: after CI passes on main, build and deploy to Vercel production.
+# Needs three repository secrets (Settings -> Secrets and variables -> Actions); until they exist this
+# workflow does nothing and says so. See README -> Deployment (Vercel) -> Continuous delivery.
+#   VERCEL_TOKEN        a Vercel access token (vercel.com/account/tokens), scoped to your team
+#   VERCEL_ORG_ID       .vercel/project.json "orgId"   (after `vercel link`) or Team Settings -> General
+#   VERCEL_PROJECT_ID   .vercel/project.json "projectId" or Project Settings -> General
+# Optional repository variable PRODUCTION_URL (e.g. https://your-site.vercel.app) enables the post-deploy check.
+# The app's own env vars (Supabase URL/key, GATEWAY_KEY, NEXT_PUBLIC_SITE_URL) stay in Vercel, not here.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One production deploy at a time; a newer commit waits instead of cancelling a deploy halfway.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Only after a successful CI run of a push to main (not pull requests), or when started by hand.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - name: Check deploy secrets
+        id: gate
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::notice::Skipping deploy: add VERCEL_TOKEN, VERCEL_ORG_ID and VERCEL_PROJECT_ID as repository secrets."
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.go == 'true'
+        with:
+          # Deploy exactly the commit CI approved, even if main moved on meanwhile.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.go == 'true'
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install Vercel CLI
+        if: steps.gate.outputs.go == 'true'
+        run: npm install --global vercel@65.12.1
+
+      # Pulls the Production environment variables and project settings from Vercel (the token is read from the environment).
+      - name: Pull Vercel environment
+        if: steps.gate.outputs.go == 'true'
+        run: vercel pull --yes --environment=production
+
+      - name: Build
+        if: steps.gate.outputs.go == 'true'
+        run: vercel build --prod
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+      - name: Deploy to production
+        id: deploy
+        if: steps.gate.outputs.go == 'true'
+        run: |
+          url=$(vercel deploy --prebuilt --prod)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      # The unique deployment URL can sit behind Vercel's login wall, so check the public production address.
+      - name: Check the live site
+        if: steps.gate.outputs.go == 'true' && env.PRODUCTION_URL != ''
+        run: |
+          for path in / /catalog /robots.txt; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --retry 5 --retry-delay 6 --retry-all-errors "$PRODUCTION_URL$path")
+            echo "$path -> $code"
+            [ "$code" = "200" ] || { echo "::error::$path returned $code"; exit 1; }
+          done
