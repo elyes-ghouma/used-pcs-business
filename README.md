@@ -38,7 +38,7 @@ npm run dev                    # http://localhost:3000
 
 ### 2. Database migrations
 
-The schema lives in [`supabase/migrations`](supabase/migrations). Apply the four files **in order**:
+The schema lives in [`supabase/migrations`](supabase/migrations). Apply the five files **in order**:
 
 | File | Contents |
 |---|---|
@@ -46,6 +46,7 @@ The schema lives in [`supabase/migrations`](supabase/migrations). Apply the four
 | `20261118100002_rls_and_grants.sql` | Row Level Security and explicit grants |
 | `20261118100003_functions.sql` | Sales, dashboard, inquiry, chat and click-tracking functions |
 | `20261118100004_storage_realtime.sql` | `site-media` bucket (5 MB, JPG/PNG/WebP) and Realtime for the inbox |
+| `20261118110000_fk_indexes.sql` | Foreign-key indexes (performance advisor) |
 
 Option A, no tools needed: open **SQL Editor** in the Supabase dashboard, paste each file in order and run it.
 Option B, Supabase CLI: `supabase link --project-ref <ref>` then `supabase db push`.
