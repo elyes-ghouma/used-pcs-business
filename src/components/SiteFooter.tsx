@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { getT } from "@/i18n/server";
 import { safeExternalUrl } from "@/lib/contact";
 import type { Settings } from "@/lib/types";
 import { Logo } from "./Logo";
 
-export function SiteFooter({ settings }: { settings: Settings }) {
+export async function SiteFooter({ settings }: { settings: Settings }) {
+  const { t } = await getT();
   const socials = [
     { label: "Facebook", href: safeExternalUrl(settings.facebook_url) },
     { label: "Instagram", href: safeExternalUrl(settings.instagram_url) },
@@ -18,20 +20,20 @@ export function SiteFooter({ settings }: { settings: Settings }) {
           {settings.description && <p className="max-w-md text-sm text-muted">{settings.description}</p>}
         </div>
         <div>
-          <h2 className="mb-3 text-xl">Visit and contact</h2>
+          <h2 className="mb-3 text-xl">{t("footer.visit")}</h2>
           <ul className="space-y-2 text-sm text-muted">
             {settings.location && <li>{settings.location}</li>}
             {settings.working_hours && <li className="whitespace-pre-line">{settings.working_hours}</li>}
             {settings.phone && <li>{settings.phone}</li>}
-            {!settings.location && !settings.working_hours && !settings.phone && <li>Contact details are coming soon.</li>}
+            {!settings.location && !settings.working_hours && !settings.phone && <li>{t("footer.soon")}</li>}
           </ul>
         </div>
         <div>
-          <h2 className="mb-3 text-xl">Browse</h2>
+          <h2 className="mb-3 text-xl">{t("footer.browse")}</h2>
           <ul className="space-y-2 text-sm">
-            <li><Link href="/catalog" className="text-muted hover:text-text">All PCs</Link></li>
-            <li><Link href="/#how-to-buy" className="text-muted hover:text-text">How to buy</Link></li>
-            <li><Link href="/contact" className="text-muted hover:text-text">Contact the seller</Link></li>
+            <li><Link href="/catalog" className="text-muted hover:text-text">{t("footer.allPcs")}</Link></li>
+            <li><Link href="/#how-to-buy" className="text-muted hover:text-text">{t("nav.howToBuy")}</Link></li>
+            <li><Link href="/contact" className="text-muted hover:text-text">{t("footer.contactSeller")}</Link></li>
             {socials.map((s) => (
               <li key={s.label}>
                 <a href={s.href} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-text">

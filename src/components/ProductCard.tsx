@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getT } from "@/i18n/server";
 import { sortImages } from "@/lib/data";
 import { formatPrice } from "@/lib/format";
 import { mediaUrl } from "@/lib/supabase/public";
@@ -15,11 +16,12 @@ export function ProductImagePlaceholder() {
  * A spec tag: photo, name, the four specs buyers ask about as a dotted-leader readout, and the price on its own strip.
  * The whole card is one link (the title carries it), so there is no second "View details" button.
  */
-export function ProductCard({ product, currency, priority = false }: { product: Product; currency: string; priority?: boolean }) {
+export async function ProductCard({ product, currency, priority = false }: { product: Product; currency: string; priority?: boolean }) {
+  const { t, locale } = await getT();
   const image = sortImages(product)[0];
   const src = mediaUrl(image?.storage_path);
   const specs = (
-    [["CPU", product.cpu], ["GPU", product.gpu], ["RAM", product.ram], ["Storage", product.storage]] as [string, string][]
+    [["cpu", product.cpu], ["gpu", product.gpu], ["ram", product.ram], ["storage", product.storage]] as const
   ).filter(([, v]) => v);
   const sold = product.status === "sold";
 
@@ -38,7 +40,7 @@ export function ProductCard({ product, currency, priority = false }: { product: 
         ) : (
           <ProductImagePlaceholder />
         )}
-        <StatusBadge status={product.status} className="absolute left-3 top-3 bg-bg-deep/90" />
+        <StatusBadge status={product.status} label={t(`status.${product.status}`)} className="absolute left-3 top-3 bg-bg-deep/90" />
       </div>
 
       <div className="flex flex-1 flex-col gap-4 p-4">
@@ -51,20 +53,20 @@ export function ProductCard({ product, currency, priority = false }: { product: 
           <dl className="space-y-2 text-sm">
             {specs.map(([k, v]) => (
               <div key={k} className="leader">
-                <dt className="leader-label">{k}</dt>
+                <dt className="leader-label">{t(`spec.${k}`)}</dt>
                 <span className="leader-fill" aria-hidden />
                 <dd className="leader-value max-w-[62%] truncate" title={v}>{v}</dd>
               </div>
             ))}
           </dl>
         ) : (
-          <p className="text-sm text-muted">Specs not listed yet. Ask the seller.</p>
+          <p className="text-sm text-muted">{t("card.noSpecs")}</p>
         )}
       </div>
 
       <div className="flex items-baseline justify-between gap-3 border-t border-line bg-raised px-4 py-3">
-        <p className="whitespace-nowrap font-display text-[1.85rem] font-extrabold leading-none text-accent-strong">{formatPrice(product.price, currency)}</p>
-        <span className="whitespace-nowrap text-sm text-muted group-hover:text-text">{sold ? "Sold" : "See specs"}</span>
+        <p className="whitespace-nowrap font-display text-[1.85rem] font-extrabold leading-none text-accent-strong">{formatPrice(product.price, currency, locale)}</p>
+        <span className="whitespace-nowrap text-sm text-muted group-hover:text-text">{sold ? t("card.sold") : t("card.seeSpecs")}</span>
       </div>
     </article>
   );

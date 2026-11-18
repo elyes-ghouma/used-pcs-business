@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useT } from "@/i18n/client";
 import { productInterestMessage, safeExternalUrl, telUrl, whatsappUrl, type ContactSettings } from "@/lib/contact";
 import { useChat } from "./chat/ChatProvider";
 
@@ -27,8 +28,10 @@ function track(channel: "whatsapp" | "messenger" | "phone" | "chat", productId?:
 /** Only channels the owner has configured are rendered, so there are no dead buttons. */
 export function ContactActions({ contact, product = null, layout = "row" }: Props) {
   const { openChat } = useChat();
+  const t = useT();
+  const locale = useLocale();
   const [copied, setCopied] = useState(false);
-  const message = productInterestMessage(product?.name);
+  const message = productInterestMessage(product?.name, locale);
   const wa = whatsappUrl(contact.whatsapp_number, message);
   const messenger = safeExternalUrl(contact.messenger_url);
   const tel = telUrl(contact.phone);
@@ -40,7 +43,7 @@ export function ContactActions({ contact, product = null, layout = "row" }: Prop
       <div className={wrap}>
         {wa && (
           <a href={wa} target="_blank" rel="noopener noreferrer" className={`btn-primary ${btn}`} onClick={() => track("whatsapp", product?.id)}>
-            WhatsApp the seller
+            {t("actions.whatsapp")}
           </a>
         )}
         {messenger && (
@@ -55,12 +58,12 @@ export function ContactActions({ contact, product = null, layout = "row" }: Prop
               navigator.clipboard?.writeText(message).then(() => setCopied(true), () => undefined);
             }}
           >
-            Message on Messenger
+            {t("actions.messenger")}
           </a>
         )}
         {tel && (
           <a href={tel} className={`btn-secondary ${btn}`} onClick={() => track("phone", product?.id)}>
-            Call {contact.phone}
+            {t("actions.call", { phone: contact.phone })}
           </a>
         )}
         <button
@@ -71,12 +74,12 @@ export function ContactActions({ contact, product = null, layout = "row" }: Prop
             openChat();
           }}
         >
-          Chat on the website
+          {t("actions.chat")}
         </button>
       </div>
       {copied && (
         <p role="status" className="hint">
-          Message copied. Paste it in Messenger so the seller knows which PC you mean.
+          {t("actions.copied")}
         </p>
       )}
     </div>

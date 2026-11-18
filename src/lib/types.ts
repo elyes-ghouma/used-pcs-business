@@ -2,6 +2,8 @@ export type ProductStatus = "available" | "reserved" | "sold";
 export type InquiryStatus = "new" | "contacted" | "negotiating" | "converted" | "closed";
 
 export type Highlight = { title: string; description: string };
+/** Optional translated versions of owner-written text, e.g. { fr: { description: "..." } }. */
+export type Translations = Record<string, Record<string, unknown> | undefined>;
 export type ExtraSpec = { label: string; value: string };
 
 export type Settings = {
@@ -26,6 +28,9 @@ export type Settings = {
   show_sold_products: boolean;
   highlights: Highlight[];
   how_to_buy: Highlight[];
+  /** Language for visitors whose browser does not say (and for link previews). */
+  default_locale?: string;
+  translations?: Translations;
 };
 
 export type ProductImage = { id: string; storage_path: string; position: number; is_primary: boolean };
@@ -57,10 +62,11 @@ export type Product = {
   created_at: string;
   updated_at: string;
   product_images?: ProductImage[];
+  translations?: Translations;
 };
 
-export type Faq = { id: string; question: string; answer: string; keywords: string; sort_order: number; is_published: boolean };
-export type Testimonial = { id: string; author_name: string; body: string; sort_order: number; is_published: boolean };
+export type Faq = { id: string; question: string; answer: string; keywords: string; sort_order: number; is_published: boolean; translations?: Translations };
+export type Testimonial = { id: string; author_name: string; body: string; sort_order: number; is_published: boolean; translations?: Translations };
 
 export const SPEC_FIELDS = [
   ["cpu", "CPU"],

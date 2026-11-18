@@ -1,3 +1,6 @@
+import type { Locale } from "@/i18n/config";
+import { createT } from "@/i18n/translate";
+
 export type ContactSettings = {
   phone: string;
   whatsapp_number: string;
@@ -10,10 +13,9 @@ export function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
 }
 
-export function productInterestMessage(productName?: string | null): string {
-  return productName
-    ? `Hello, I'm interested in ${productName} listed on your website. Is it still available?`
-    : "Hello, I'm interested in a PC listed on your website. Is it still available?";
+export function productInterestMessage(productName?: string | null, locale: Locale = "en"): string {
+  const t = createT(locale);
+  return productName ? t("message.interest", { name: productName }) : t("message.interestGeneric");
 }
 
 /** wa.me needs the number in international format, digits only (e.g. 21620123456). */

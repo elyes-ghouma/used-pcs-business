@@ -51,17 +51,18 @@ export const productSchema = z.object({
 });
 export type ProductInput = z.infer<typeof productSchema>;
 
+/** Error messages here are message KEYS (see src/i18n): the public form translates them for the visitor. */
 export const inquirySchema = z
   .object({
-    name: requiredText(2, 100),
-    phone: z.string().trim().max(25).default(""),
-    email: z.string().trim().max(200).default(""),
-    message: requiredText(3, 2000),
+    name: z.string().trim().min(2, "err.name").max(100, "err.tooLong"),
+    phone: z.string().trim().max(25, "err.phone").default(""),
+    email: z.string().trim().max(200, "err.email").default(""),
+    message: z.string().trim().min(3, "err.message").max(2000, "err.tooLong"),
     productId: z.string().uuid().nullable().default(null),
   })
-  .refine((v) => v.phone || v.email, { message: "Enter a phone number or an email so we can reply.", path: ["phone"] })
-  .refine((v) => !v.phone || /^[0-9+()\-\s.]{6,25}$/.test(v.phone), { message: "Enter a valid phone number.", path: ["phone"] })
-  .refine((v) => !v.email || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email), { message: "Enter a valid email address.", path: ["email"] });
+  .refine((v) => v.phone || v.email, { message: "err.contactRequired", path: ["phone"] })
+  .refine((v) => !v.phone || /^[0-9+()\-\s.]{6,25}$/.test(v.phone), { message: "err.phone", path: ["phone"] })
+  .refine((v) => !v.email || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.email), { message: "err.email", path: ["email"] });
 
 export const saleSchema = z.object({
   productId: z.string().uuid("Choose a product."),

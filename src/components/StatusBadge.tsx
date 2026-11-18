@@ -6,11 +6,12 @@ const tone: Record<ProductStatus, string> = {
   sold: "text-bad border-bad/50 bg-bad/10",
 };
 
-export function StatusBadge({ status, className = "" }: { status: ProductStatus; className?: string }) {
+/** `label` lets the public site pass the translated text; the admin area uses the English default. */
+export function StatusBadge({ status, label, className = "" }: { status: ProductStatus; label?: string; className?: string }) {
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-xs font-semibold ${tone[status]} ${className}`}>
       <span aria-hidden className="size-1.5 bg-current" />
-      {STATUS_LABEL[status]}
+      {label ?? STATUS_LABEL[status]}
     </span>
   );
 }

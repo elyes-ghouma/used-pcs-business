@@ -3,6 +3,8 @@ import { z } from "zod";
 import { respond } from "@/lib/chatbot/engine";
 import type { BotContext } from "@/lib/chatbot/types";
 import { fetchState, readToken, startConversation } from "@/lib/chat-server";
+import { localizeFaq, localizeProduct, localizeSettings } from "@/i18n/content";
+import { getLocale } from "@/i18n/server";
 import { getAllVisibleProducts, getFaqs, getSettings } from "@/lib/data";
 import { createGatewayClient, isGatewayConfigured } from "@/lib/gateway";
 import { clientIp, isSameOrigin, rateLimit, readJsonLimited } from "@/lib/ratelimit";
@@ -64,7 +66,14 @@ export async function POST(request: Request) {
     const probe = await fetchState(token, visitorMessageId);
     if (probe && !probe.escalated) {
       const [settings, faqs, products] = await Promise.all([getSettings(), getFaqs(), getAllVisibleProducts()]);
-      const ctx: BotContext = { settings, faqs, products, currentProductId: productId };
+      const locale = await getLocale();
+      const ctx: BotContext = {
+        settings: localizeSettings(settings, locale),
+        faqs: faqs.map((f) => localizeFaq(f, locale)),
+        products: products.map((p) => localizeProduct(p, locale)),
+        currentProductId: productId,
+        locale,
+      };
       const reply = respond(message, ctx);
       await db.rpc("chat_post_bot_message", {
         p_token: token,

@@ -6,7 +6,10 @@ import { ContactActions } from "@/components/ContactActions";
 import { InquiryForm } from "@/components/InquiryForm";
 import { ProductGallery } from "@/components/ProductGallery";
 import { StatusBadge } from "@/components/StatusBadge";
-import { getProductBySlug, getSettings, sortImages } from "@/lib/data";
+import { OG_LOCALE } from "@/i18n/config";
+import { localizeProduct } from "@/i18n/content";
+import { getPublicSettings, getT } from "@/i18n/server";
+import { getProductBySlug, sortImages } from "@/lib/data";
 import { formatDate, formatPrice } from "@/lib/format";
 import { mediaUrl } from "@/lib/supabase/public";
 import { SPEC_FIELDS } from "@/lib/types";
@@ -17,18 +20,20 @@ type Params = Promise<{ slug: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
-  const [product, settings] = await Promise.all([getProductBySlug(slug), getSettings()]);
-  if (!product) return { title: "PC not found", robots: { index: false } };
-  const price = formatPrice(product.price, settings.currency);
+  const [found, settings, { t, locale }] = await Promise.all([getProductBySlug(slug), getPublicSettings(), getT()]);
+  if (!found) return { title: t("product.notFound"), robots: { index: false } };
+  const product = localizeProduct(found, locale);
+  const price = formatPrice(product.price, settings.currency, locale);
   const specs = [product.cpu, product.gpu, product.ram, product.storage].filter(Boolean).join(" | ");
   const description = [price, specs, product.description].filter(Boolean).join(". ").slice(0, 200);
   const image = mediaUrl(sortImages(product)[0]?.storage_path);
   return {
-    title: `${product.name} | ${settings.business_name}`,
+    title: t("product.meta.title", { name: product.name, site: settings.business_name }),
     description,
     alternates: { canonical: `/pcs/${product.slug}` },
     openGraph: {
       type: "website",
+      locale: OG_LOCALE[locale],
       title: `${product.name} - ${price}`,
       description,
       url: `/pcs/${product.slug}`,
@@ -41,13 +46,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function ProductPage({ params }: { params: Params }) {
   const { slug } = await params;
-  const [product, settings] = await Promise.all([getProductBySlug(slug), getSettings()]);
-  if (!product) notFound();
+  const [found, settings, { t, locale }] = await Promise.all([getProductBySlug(slug), getPublicSettings(), getT()]);
+  if (!found) notFound();
+  const product = localizeProduct(found, locale);
 
   const images = sortImages(product)
     .map((i) => ({ id: i.id, url: mediaUrl(i.storage_path) }))
     .filter((i): i is { id: string; url: string } => Boolean(i.url));
-  const specs = SPEC_FIELDS.map(([key, label]) => [label, product[key]] as const).filter(([, v]) => v);
+  const specs = SPEC_FIELDS.map(([key]) => [t(`spec.${key}`), product[key]] as const).filter(([, v]) => v);
   const extras = product.extra_specs ?? [];
   const contact = {
     phone: settings.phone,
@@ -77,8 +83,8 @@ export default async function ProductPage({ params }: { params: Params }) {
     <div className="container-page py-8">
       <SetChatProduct product={{ id: product.id, name: product.name, slug: product.slug }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <nav aria-label="Breadcrumb" className="mb-5 text-sm text-muted">
-        <Link href="/catalog" className="hover:text-text">Catalog</Link> <span aria-hidden>/</span> <span className="text-text">{product.name}</span>
+      <nav aria-label={t("product.breadcrumb")} className="mb-5 text-sm text-muted">
+        <Link href="/catalog" className="hover:text-text">{t("product.catalog")}</Link> <span aria-hidden>/</span> <span className="text-text">{product.name}</span>
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-[1.25fr_1fr]">
@@ -90,12 +96,12 @@ export default async function ProductPage({ params }: { params: Params }) {
           <div className="max-lg:order-3 lg:mt-10">
           {product.description && (
             <section aria-labelledby="desc-heading">
-              <h2 id="desc-heading" className="text-3xl">Description</h2>
+              <h2 id="desc-heading" className="text-3xl">{t("product.description")}</h2>
               <p className="mt-3 max-w-prose whitespace-pre-line text-muted">{product.description}</p>
             </section>
           )}
           <section aria-labelledby="spec-heading" className="mt-10">
-            <h2 id="spec-heading" className="text-3xl">Specifications</h2>
+            <h2 id="spec-heading" className="text-3xl">{t("product.specs")}</h2>
             {specs.length + extras.length > 0 ? (
               <dl className="mt-5 border-t border-line">
                 {specs.map(([label, value]) => (
@@ -114,17 +120,17 @@ export default async function ProductPage({ params }: { params: Params }) {
                 ))}
               </dl>
             ) : (
-              <p className="mt-3 text-muted">The seller hasn&apos;t listed detailed specifications for this PC yet. Ask the seller for details.</p>
+              <p className="mt-3 text-muted">{t("product.noSpecs")}</p>
             )}
           </section>
           {(product.accessories || product.condition || product.testing_info || product.warranty_info) && (
             <section aria-labelledby="more-heading" className="mt-10">
-              <h2 id="more-heading" className="text-3xl">Condition and guarantees</h2>
+              <h2 id="more-heading" className="text-3xl">{t("product.conditionTitle")}</h2>
               <dl className="mt-5 border-t border-line">
-                {product.condition && <div className="border-b border-line-soft py-4"><dt className="text-muted">Condition</dt><dd className="mt-1 whitespace-pre-line">{product.condition}</dd></div>}
-                {product.testing_info && <div className="border-b border-line-soft py-4"><dt className="text-muted">Testing</dt><dd className="mt-1 whitespace-pre-line">{product.testing_info}</dd></div>}
-                {product.accessories && <div className="border-b border-line-soft py-4"><dt className="text-muted">Included accessories</dt><dd className="mt-1 whitespace-pre-line">{product.accessories}</dd></div>}
-                {product.warranty_info && <div className="border-b border-line-soft py-4"><dt className="text-muted">Warranty</dt><dd className="mt-1 whitespace-pre-line">{product.warranty_info}</dd></div>}
+                {product.condition && <div className="border-b border-line-soft py-4"><dt className="text-muted">{t("product.condition")}</dt><dd className="mt-1 whitespace-pre-line">{product.condition}</dd></div>}
+                {product.testing_info && <div className="border-b border-line-soft py-4"><dt className="text-muted">{t("product.testing")}</dt><dd className="mt-1 whitespace-pre-line">{product.testing_info}</dd></div>}
+                {product.accessories && <div className="border-b border-line-soft py-4"><dt className="text-muted">{t("product.accessories")}</dt><dd className="mt-1 whitespace-pre-line">{product.accessories}</dd></div>}
+                {product.warranty_info && <div className="border-b border-line-soft py-4"><dt className="text-muted">{t("product.warranty")}</dt><dd className="mt-1 whitespace-pre-line">{product.warranty_info}</dd></div>}
               </dl>
             </section>
           )}
@@ -137,24 +143,24 @@ export default async function ProductPage({ params }: { params: Params }) {
               <h1 className="text-4xl">{product.name}</h1>
               <StatusBadge status={product.status} className="mt-1.5 shrink-0" />
             </div>
-            <p className="font-display text-5xl font-bold text-accent-strong">{formatPrice(product.price, settings.currency)}</p>
+            <p className="font-display text-5xl font-bold text-accent-strong">{formatPrice(product.price, settings.currency, locale)}</p>
             {!available && (
               <p className="rounded-md border border-line bg-bg px-3 py-2 text-sm text-muted">
                 {product.status === "reserved"
-                  ? "This PC is reserved for another customer. Ask the seller if it becomes available again."
-                  : "This PC has been sold. Ask the seller about similar PCs."}
+                  ? t("product.reservedNote")
+                  : t("product.soldNote")}
               </p>
             )}
-            <p className="text-sm text-muted">Added on {formatDate(product.created_at)}</p>
+            <p className="text-sm text-muted">{t("product.added", { date: formatDate(product.created_at, false, locale) })}</p>
             <div>
-              <h2 className="mb-3 text-xl">{available ? "Interested? Contact the seller" : "Ask the seller"}</h2>
+              <h2 className="mb-3 text-xl">{available ? t("product.contactAvailable") : t("product.contactOther")}</h2>
               <ContactActions contact={contact} product={{ id: product.id, name: product.name }} layout="stack" />
             </div>
           </div>
 
           <div className="panel mt-6 p-6">
-            <h2 className="mb-1 text-2xl">Send a message</h2>
-            <p className="mb-4 text-sm text-muted">The seller will reply to the contact details you provide.</p>
+            <h2 className="mb-1 text-2xl">{t("product.sendMessage")}</h2>
+            <p className="mb-4 text-sm text-muted">{t("product.sendMessageHint")}</p>
             <InquiryForm productId={product.id} productName={product.name} />
           </div>
         </aside>

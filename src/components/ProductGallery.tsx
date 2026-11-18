@@ -2,13 +2,15 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { useT } from "@/i18n/client";
 
 export function ProductGallery({ images, name, soldOut }: { images: { id: string; url: string }[]; name: string; soldOut: boolean }) {
   const [index, setIndex] = useState(0);
+  const t = useT();
   if (images.length === 0) {
     return (
-      <div className="photo-empty flex aspect-[4/3] items-end rounded-md border border-line p-5" role="img" aria-label="No photos yet">
-        <p className="text-sm text-muted">No photos yet. Ask the seller for pictures.</p>
+      <div className="photo-empty flex aspect-[4/3] items-end rounded-md border border-line p-5" role="img" aria-label={t("gallery.noneAria")}>
+        <p className="text-sm text-muted">{t("gallery.none")}</p>
       </div>
     );
   }
@@ -19,7 +21,7 @@ export function ProductGallery({ images, name, soldOut }: { images: { id: string
         <Image
           key={current.id}
           src={current.url}
-          alt={`${name}, photo ${index + 1} of ${images.length}`}
+          alt={t("gallery.alt", { name, i: index + 1, n: images.length })}
           fill
           priority
           sizes="(min-width: 1024px) 55vw, 100vw"
@@ -27,13 +29,13 @@ export function ProductGallery({ images, name, soldOut }: { images: { id: string
         />
       </div>
       {images.length > 1 && (
-        <ul className="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-6" aria-label="Photos">
+        <ul className="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-6" aria-label={t("gallery.photos")}>
           {images.map((img, i) => (
             <li key={img.id}>
               <button
                 type="button"
                 onClick={() => setIndex(i)}
-                aria-label={`Show photo ${i + 1}`}
+                aria-label={t("gallery.show", { i: i + 1 })}
                 aria-current={i === index}
                 className={`relative block aspect-square w-full overflow-hidden rounded-md border ${i === index ? "border-accent" : "border-line hover:border-muted"}`}
               >

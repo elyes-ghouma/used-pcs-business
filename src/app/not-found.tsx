@@ -1,13 +1,15 @@
 import Link from "next/link";
+import { getT } from "@/i18n/server";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const { t, locale } = await getT();
   return (
-    <main id="main" className="container-page flex min-h-dvh flex-col items-start justify-center gap-4 py-20">
-      <h1 className="text-6xl">Page not found</h1>
-      <p className="max-w-md text-muted">The page you are looking for doesn&apos;t exist or the PC has been removed.</p>
+    <main id="main" lang={locale} className="container-page flex min-h-dvh flex-col items-start justify-center gap-4 py-20">
+      <h1 className="text-6xl">{t("notFound.title")}</h1>
+      <p className="max-w-md text-muted">{t("notFound.text")}</p>
       <div className="flex gap-3">
-        <Link href="/catalog" className="btn-primary">Browse PCs</Link>
-        <Link href="/" className="btn-secondary">Go home</Link>
+        <Link href="/catalog" className="btn-primary">{t("notFound.browse")}</Link>
+        <Link href="/" className="btn-secondary">{t("notFound.home")}</Link>
       </div>
     </main>
   );

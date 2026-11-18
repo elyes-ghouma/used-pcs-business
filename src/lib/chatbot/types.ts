@@ -1,3 +1,4 @@
+import type { Locale } from "@/i18n/config";
 import type { Faq, Product, ProductStatus, Settings } from "../types";
 
 /** The only product data the bot is allowed to talk about. It always comes from the database. */
@@ -18,6 +19,8 @@ export type BotContext = {
   products: BotProduct[];
   /** Product the visitor is currently looking at, if any. */
   currentProductId?: string | null;
+  /** Language of the replies (the page language). Questions are understood in both languages. */
+  locale?: Locale;
 };
 
 export type BotProductCard = {
@@ -29,12 +32,15 @@ export type BotProductCard = {
   summary: string[];
 };
 
+/** A quick-reply chip. `seller` opens the contact-the-seller panel; `send` posts `text` as a message. */
+export type BotSuggestion = { label: string; action: "send" | "seller"; text?: string };
+
 export type BotReply = {
   text: string;
   products?: BotProductCard[];
   /** Tells the UI to show the "contact the seller" options. */
   action?: "offer_seller";
-  suggestions?: string[];
+  suggestions?: BotSuggestion[];
 };
 
 /**

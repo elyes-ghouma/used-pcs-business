@@ -8,9 +8,9 @@ import { isSupabaseConfigured } from "@/lib/supabase/public";
 export const dynamic = "force-dynamic";
 
 const schema = z.object({
-  name: z.string().trim().min(2, "Enter your name.").max(100),
-  contact: z.string().trim().min(6, "Enter a phone number or an email.").max(200),
-  message: z.string().trim().min(3, "Write a short message.").max(2000),
+  name: z.string().trim().min(2, "err.name").max(100, "err.tooLong"),
+  contact: z.string().trim().min(6, "chat.err.contact").max(200, "chat.err.contact"),
+  message: z.string().trim().min(3, "err.message").max(2000, "err.tooLong"),
   after: z.number().int().min(0).default(0),
   productId: z.string().uuid().nullable().default(null),
 });
@@ -19,11 +19,11 @@ export async function POST(request: Request) {
   if (!isSameOrigin(request)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   if (!isSupabaseConfigured() || !isGatewayConfigured()) return NextResponse.json({ error: "not_configured" }, { status: 503 });
   if (!rateLimit(`chat-escalate:${clientIp(request.headers)}`, 5, 10 * 60_000)) {
-    return NextResponse.json({ error: "rate_limited", message: "Too many requests. Please wait a few minutes." }, { status: 429 });
+    return NextResponse.json({ error: "rate_limited", message: "chat.err.rate" }, { status: 429 });
   }
   const parsed = schema.safeParse(await readJsonLimited(request));
   if (!parsed.success) {
-    return NextResponse.json({ error: "invalid", message: parsed.error.issues[0]?.message ?? "Check your details." }, { status: 400 });
+    return NextResponse.json({ error: "invalid", message: parsed.error.issues[0]?.message ?? "chat.err.escalate" }, { status: 400 });
   }
   const { name, contact, message, after, productId } = parsed.data;
 
@@ -38,13 +38,13 @@ export async function POST(request: Request) {
     }
     if (res.error) {
       const msg = res.error.message;
-      if (/contact_required/.test(msg)) return NextResponse.json({ error: "invalid", message: "Enter a valid phone number or email." }, { status: 400 });
-      if (/rate_limited/.test(msg)) return NextResponse.json({ error: "rate_limited", message: "Too many requests. Please wait a few minutes." }, { status: 429 });
-      return NextResponse.json({ error: "invalid", message: "We couldn't send your request. Check your details and try again." }, { status: 400 });
+      if (/contact_required/.test(msg)) return NextResponse.json({ error: "invalid", message: "chat.err.contact" }, { status: 400 });
+      if (/rate_limited/.test(msg)) return NextResponse.json({ error: "rate_limited", message: "chat.err.rate" }, { status: 429 });
+      return NextResponse.json({ error: "invalid", message: "chat.err.escalate" }, { status: 400 });
     }
     const state = await fetchState(token, after);
     return NextResponse.json({ started: true, ...(state ?? { status: "open", escalated: true, messages: [] }) });
   } catch {
-    return NextResponse.json({ error: "chat_unavailable", message: "The chat is unavailable right now. Please use WhatsApp or the phone." }, { status: 502 });
+    return NextResponse.json({ error: "chat_unavailable", message: "chat.err.unavailable" }, { status: 502 });
   }
 }

@@ -1,4 +1,7 @@
-export default function Loading() {
+import { getT } from "@/i18n/server";
+
+export default async function Loading() {
+  const { t } = await getT();
   return (
     <div className="container-page py-10" aria-busy="true" aria-live="polite">
       <div className="h-12 w-56 animate-pulse rounded bg-surface" />
@@ -10,7 +13,7 @@ export default function Loading() {
           ))}
         </ul>
       </div>
-      <span className="sr-only">Loading PCs</span>
+      <span className="sr-only">{t("catalog.loading")}</span>
     </div>
   );
 }
