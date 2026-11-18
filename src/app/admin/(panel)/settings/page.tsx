@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { deleteFaqAction, deleteTestimonialAction, saveFaqAction, saveTestimonialAction } from "@/app/admin/actions/business";
+import { frField } from "@/i18n/content";
 import { LogoUploader } from "@/components/admin/LogoUploader";
 import { SettingsForm } from "@/components/admin/SettingsForm";
 import { requireAdmin } from "@/lib/auth";
@@ -40,6 +41,9 @@ export default async function SettingsPage() {
                 <div><label htmlFor={`fq-${f.id}`} className="label">Question</label><input id={`fq-${f.id}`} name="question" defaultValue={f.question} className="field" required maxLength={200} /></div>
                 <div><label htmlFor={`fa-${f.id}`} className="label">Answer</label><textarea id={`fa-${f.id}`} name="answer" defaultValue={f.answer} rows={3} className="field" required maxLength={2000} /></div>
                 <div><label htmlFor={`fk-${f.id}`} className="label">Keywords</label><input id={`fk-${f.id}`} name="keywords" defaultValue={f.keywords} className="field" maxLength={300} placeholder="test before, try, inspect" /></div>
+                <div><label htmlFor={`fqf-${f.id}`} className="label">Question (French, optional)</label><input id={`fqf-${f.id}`} name="fr_question" defaultValue={frField(f.translations, "question")} className="field" maxLength={200} /></div>
+                <div><label htmlFor={`fqa-${f.id}`} className="label">Answer (French, optional)</label><textarea id={`fqa-${f.id}`} name="fr_answer" defaultValue={frField(f.translations, "answer")} rows={3} className="field" maxLength={2000} /></div>
+                <div><label htmlFor={`fqk-${f.id}`} className="label">Keywords (French, optional)</label><input id={`fqk-${f.id}`} name="fr_keywords" defaultValue={frField(f.translations, "keywords")} className="field" maxLength={300} placeholder="tester avant, essayer, vérifier" /></div>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_published" defaultChecked={f.is_published} className="size-4 accent-[var(--accent)]" />Published</label>
                   <label className="flex items-center gap-2 text-sm">Order <input name="sort_order" type="number" defaultValue={f.sort_order} className="field w-20" /></label>
@@ -55,6 +59,9 @@ export default async function SettingsPage() {
           <div><label htmlFor="nfq" className="label">Question</label><input id="nfq" name="question" className="field" required maxLength={200} /></div>
           <div><label htmlFor="nfa" className="label">Answer</label><textarea id="nfa" name="answer" rows={3} className="field" required maxLength={2000} /></div>
           <div><label htmlFor="nfk" className="label">Keywords</label><input id="nfk" name="keywords" className="field" maxLength={300} /></div>
+          <div><label htmlFor="nfqf" className="label">Question (French, optional)</label><input id="nfqf" name="fr_question" className="field" maxLength={200} /></div>
+          <div><label htmlFor="nfaf" className="label">Answer (French, optional)</label><textarea id="nfaf" name="fr_answer" rows={3} className="field" maxLength={2000} /></div>
+          <div><label htmlFor="nfkf" className="label">Keywords (French, optional)</label><input id="nfkf" name="fr_keywords" className="field" maxLength={300} /></div>
           <input type="hidden" name="is_published" value="on" />
           <div><button className="btn-primary">Add question</button></div>
         </form>
@@ -71,6 +78,7 @@ export default async function SettingsPage() {
               <form action={saveTestimonialAction.bind(null, t.id)} className="grid gap-3">
                 <div><label htmlFor={`ta-${t.id}`} className="label">Customer name</label><input id={`ta-${t.id}`} name="author_name" defaultValue={t.author_name} className="field" required maxLength={80} /></div>
                 <div><label htmlFor={`tb-${t.id}`} className="label">What they said</label><textarea id={`tb-${t.id}`} name="body" defaultValue={t.body} rows={3} className="field" required maxLength={600} /></div>
+                <div><label htmlFor={`tbf-${t.id}`} className="label">What they said (French, optional)</label><textarea id={`tbf-${t.id}`} name="fr_body" defaultValue={frField(t.translations, "body")} rows={3} className="field" maxLength={600} /></div>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_published" defaultChecked={t.is_published} className="size-4 accent-[var(--accent)]" />Published</label>
                   <label className="flex items-center gap-2 text-sm">Order <input name="sort_order" type="number" defaultValue={t.sort_order} className="field w-20" /></label>
@@ -85,6 +93,7 @@ export default async function SettingsPage() {
           <p className="font-medium">Add a testimonial</p>
           <div><label htmlFor="nta" className="label">Customer name</label><input id="nta" name="author_name" className="field" required maxLength={80} /></div>
           <div><label htmlFor="ntb" className="label">What they said</label><textarea id="ntb" name="body" rows={3} className="field" required maxLength={600} /></div>
+          <div><label htmlFor="ntbf" className="label">What they said (French, optional)</label><textarea id="ntbf" name="fr_body" rows={3} className="field" maxLength={600} /></div>
           <input type="hidden" name="is_published" value="on" />
           <div><button className="btn-primary">Add testimonial</button></div>
         </form>

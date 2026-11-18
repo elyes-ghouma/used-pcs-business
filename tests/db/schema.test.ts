@@ -419,3 +419,30 @@ describe("storage & realtime configuration", () => {
     expect(tables.map((t) => t.tablename).sort()).toEqual(["conversations", "messages"]);
   });
 });
+
+describe("translations columns", () => {
+  it("accept a small French object and default to an empty one", async () => {
+    const id = await newProduct("Translated PC");
+    const [before] = await run<{ translations: unknown }>(db, asUser(admin), `select translations from public.products where id = $1`, [id]);
+    expect(before.translations).toEqual({});
+    await run(db, asUser(admin), `update public.products set translations = $2::jsonb where id = $1`, [id, JSON.stringify({ fr: { description: "Très bon état" } })]);
+    const [after] = await run<{ translations: { fr: { description: string } } }>(db, asUser(admin), `select translations from public.products where id = $1`, [id]);
+    expect(after.translations.fr.description).toBe("Très bon état");
+  });
+
+  it("refuse non-objects and oversized payloads", async () => {
+    const id = await newProduct("Bad Translation PC");
+    await expectFail(run(db, asUser(admin), `update public.products set translations = '[1]'::jsonb where id = $1`, [id]), /check constraint/i);
+    const huge = JSON.stringify({ fr: { description: "x".repeat(25000) } });
+    await expectFail(run(db, asUser(admin), `update public.products set translations = $2::jsonb where id = $1`, [id, huge]), /check constraint/i);
+  });
+
+  it("only allow English or French as the default language, and only admins may change it", async () => {
+    await expectFail(run(db, asUser(admin), `update public.business_settings set default_locale = 'de' where id = 1`), /check constraint/i);
+    await run(db, asUser(admin), `update public.business_settings set default_locale = 'fr' where id = 1`);
+    const rows = await run<{ default_locale: string }>(db, anon, `select default_locale from public.business_settings where id = 1`);
+    expect(rows[0].default_locale).toBe("fr");
+    await expectFail(run(db, anon, `update public.business_settings set default_locale = 'en' where id = 1`), /permission denied/i);
+    await run(db, asUser(admin), `update public.business_settings set default_locale = 'en' where id = 1`);
+  });
+});

@@ -100,7 +100,29 @@ const pairs = z
       }),
   );
 
+/** Max lengths of the optional French versions (same limits as the main text). Keys are the column names. */
+export const SETTINGS_FR_TEXT = { tagline: 160, description: 1000, hero_headline: 120, hero_subheadline: 300, working_hours: 500, delivery_info: 2000, payment_methods: 1000, warranty_policy: 2000, chatbot_welcome: 500 };
+export const SETTINGS_FR_LISTS = ["highlights", "how_to_buy"];
+export const PRODUCT_FR_TEXT = { description: 5000, condition: 500, testing_info: 2000, accessories: 1000, warranty_info: 1000 };
+export const FAQ_FR_TEXT = { question: 200, answer: 2000, keywords: 300 };
+export const TESTIMONIAL_FR_TEXT = { body: 600 };
+
+/** Optional French text from the admin forms (`fr_<field>` inputs) as the `translations` JSON column. Empty fields are left out. */
+export function buildTranslations(get: (key: string) => string, text: Record<string, number>, lists: string[] = []) {
+  const fr: Record<string, unknown> = {};
+  for (const [field, max] of Object.entries(text)) {
+    const v = get(`fr_${field}`).trim().slice(0, max);
+    if (v) fr[field] = v;
+  }
+  for (const field of lists) {
+    const items = pairs.parse(get(`fr_${field}`));
+    if (items.length) fr[field] = items;
+  }
+  return Object.keys(fr).length ? { fr } : {};
+}
+
 export const settingsSchema = z.object({
+  default_locale: z.enum(["en", "fr"]).default("en"),
   business_name: requiredText(1, 80),
   tagline: text(160),
   description: text(1000),

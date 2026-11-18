@@ -8,7 +8,10 @@ import { isUuid } from "@/lib/guards";
 import { reencodeToWebp } from "@/lib/image-process";
 import { detectImageKind, isValidMediaPath, MAX_IMAGE_BYTES, MEDIA_BUCKET } from "@/lib/images";
 import type { InquiryStatus } from "@/lib/types";
-import { faqSchema, flattenErrors, saleSchema, settingsSchema, testimonialSchema, type ActionState } from "@/lib/validation";
+import {
+  buildTranslations, FAQ_FR_TEXT, faqSchema, flattenErrors, saleSchema, SETTINGS_FR_LISTS, SETTINGS_FR_TEXT,
+  settingsSchema, TESTIMONIAL_FR_TEXT, testimonialSchema, type ActionState,
+} from "@/lib/validation";
 
 async function guard() {
   try {
@@ -98,6 +101,7 @@ export async function updateSettingsAction(_prev: ActionState, formData: FormDat
   if (!admin) return EXPIRED;
   const pairText = (key: string) => str(formData, key);
   const parsed = settingsSchema.safeParse({
+    default_locale: str(formData, "default_locale") || "en",
     business_name: str(formData, "business_name"),
     tagline: str(formData, "tagline"),
     description: str(formData, "description"),
@@ -120,7 +124,8 @@ export async function updateSettingsAction(_prev: ActionState, formData: FormDat
     how_to_buy: pairText("how_to_buy"),
   });
   if (!parsed.success) return { ok: false, message: "Please fix the highlighted fields.", fieldErrors: flattenErrors(parsed.error) };
-  const { error } = await admin.supabase.from("business_settings").update(parsed.data).eq("id", 1);
+  const { error } = await admin.supabase.from("business_settings").update({ ...parsed.data, translations: buildTranslations((k) => str(formData, k), SETTINGS_FR_TEXT, SETTINGS_FR_LISTS) })
+    .eq("id", 1);
   if (error) return { ok: false, message: "Could not save the settings. Please try again." };
   revalidatePath("/", "layout");
   return { ok: true, message: "Settings saved." };
@@ -176,7 +181,12 @@ export async function saveFaqAction(id: string | null, formData: FormData): Prom
   if (id !== null && !isUuid(id)) return;
   const parsed = faqSchema.safeParse({ question: str(formData, "question"), answer: str(formData, "answer"), keywords: str(formData, "keywords") });
   if (!parsed.success) return;
-  const row = { ...parsed.data, is_published: formData.get("is_published") === "on", sort_order: Number(str(formData, "sort_order")) || 0 };
+  const row = {
+    ...parsed.data,
+    translations: buildTranslations((k) => str(formData, k), FAQ_FR_TEXT),
+    is_published: formData.get("is_published") === "on",
+    sort_order: Number(str(formData, "sort_order")) || 0,
+  };
   if (id) await admin.supabase.from("faqs").update(row).eq("id", id);
   else await admin.supabase.from("faqs").insert(row);
   revalidatePath("/admin/settings");
@@ -198,7 +208,12 @@ export async function saveTestimonialAction(id: string | null, formData: FormDat
   if (id !== null && !isUuid(id)) return;
   const parsed = testimonialSchema.safeParse({ author_name: str(formData, "author_name"), body: str(formData, "body") });
   if (!parsed.success) return;
-  const row = { ...parsed.data, is_published: formData.get("is_published") === "on", sort_order: Number(str(formData, "sort_order")) || 0 };
+  const row = {
+    ...parsed.data,
+    translations: buildTranslations((k) => str(formData, k), TESTIMONIAL_FR_TEXT),
+    is_published: formData.get("is_published") === "on",
+    sort_order: Number(str(formData, "sort_order")) || 0,
+  };
   if (id) await admin.supabase.from("testimonials").update(row).eq("id", id);
   else await admin.supabase.from("testimonials").insert(row);
   revalidatePath("/admin/settings");

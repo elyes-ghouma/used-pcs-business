@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { updateSettingsAction } from "@/app/admin/actions/business";
+import { frField, frLines } from "@/i18n/content";
 import type { Settings } from "@/lib/types";
 import type { ActionState } from "@/lib/validation";
 import { Area, Field, FormBanner } from "./fields";
@@ -12,6 +13,7 @@ const toLines = (items: { title: string; description: string }[]) => items.map((
 export function SettingsForm({ settings }: { settings: Settings }) {
   const [state, action, pending] = useActionState(updateSettingsAction, initial);
   const e = state.fieldErrors;
+  const tr = settings.translations;
   return (
     <form action={action} className="space-y-8">
       <FormBanner state={state} />
@@ -63,6 +65,32 @@ export function SettingsForm({ settings }: { settings: Settings }) {
       <fieldset className="panel space-y-4 p-5">
         <legend className="px-1 font-display text-2xl font-bold">Chatbot</legend>
         <Area name="chatbot_welcome" label="Welcome message" required defaultValue={settings.chatbot_welcome} errors={e} rows={2} maxLength={500} />
+      </fieldset>
+
+      <fieldset className="panel space-y-4 p-5">
+        <legend className="px-1 font-display text-2xl font-bold">Languages</legend>
+        <div>
+          <label htmlFor="default_locale" className="label">Default website language</label>
+          <select id="default_locale" name="default_locale" defaultValue={settings.default_locale ?? "en"} className="field">
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+          </select>
+          <p className="hint mt-1">Visitors get their browser&apos;s language when it is English or French; everyone else, and link previews on Facebook or WhatsApp, get this one. Visitors can always switch with the EN / FR buttons.</p>
+        </div>
+        <p className="hint">
+          French version of the text above (optional). Leave a field empty to show the main text to French visitors. Prices, specs and names are not translated. The admin area stays in English.
+        </p>
+        <Field name="fr_hero_headline" label="Homepage headline (French)" defaultValue={frField(tr, "hero_headline")} errors={e} maxLength={120} />
+        <Area name="fr_hero_subheadline" label="Homepage intro (French)" defaultValue={frField(tr, "hero_subheadline")} errors={e} rows={2} maxLength={300} />
+        <Field name="fr_tagline" label="Tagline (French)" defaultValue={frField(tr, "tagline")} errors={e} maxLength={160} />
+        <Area name="fr_description" label="Description (French)" defaultValue={frField(tr, "description")} errors={e} rows={3} maxLength={1000} />
+        <Area name="fr_working_hours" label="Working hours (French)" defaultValue={frField(tr, "working_hours")} errors={e} rows={2} maxLength={500} />
+        <Area name="fr_delivery_info" label="Delivery information (French)" defaultValue={frField(tr, "delivery_info")} errors={e} rows={3} maxLength={2000} />
+        <Area name="fr_payment_methods" label="Accepted payment methods (French)" defaultValue={frField(tr, "payment_methods")} errors={e} rows={2} maxLength={1000} />
+        <Area name="fr_warranty_policy" label="Warranty policy (French)" defaultValue={frField(tr, "warranty_policy")} errors={e} rows={3} maxLength={2000} />
+        <Area name="fr_highlights" label="Why buy from us (French)" defaultValue={frLines(tr, "highlights")} errors={e} rows={4} hint="One point per line as Title | description, in the same order as the English list." />
+        <Area name="fr_how_to_buy" label="How to buy (French)" defaultValue={frLines(tr, "how_to_buy")} errors={e} rows={4} hint="One step per line as Title | description. Empty: the standard French steps are used while the English ones are unchanged." />
+        <Area name="fr_chatbot_welcome" label="Chatbot welcome message (French)" defaultValue={frField(tr, "chatbot_welcome")} errors={e} rows={2} maxLength={500} />
       </fieldset>
 
       <button type="submit" className="btn-primary" disabled={pending}>{pending ? "Saving..." : "Save settings"}</button>

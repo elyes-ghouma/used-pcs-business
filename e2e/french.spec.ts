@@ -1,4 +1,5 @@
-import { newVisitor, expect, test } from "./fixtures";
+import { expect, newVisitor, test } from "./fixtures";
+import { ADMIN_STATE } from "./state";
 
 // Words that must not appear on a French page (they would mean an English label leaked through).
 const ENGLISH_LEAKS = [
@@ -76,5 +77,65 @@ test.describe("French interface", () => {
       expect(overflow, path).toBeLessThanOrEqual(0);
     }
     await ctx.close();
+  });
+});
+
+// The owner adds French text in the admin; French visitors see it, English visitors keep the main text.
+const EMAIL = process.env.E2E_ADMIN_EMAIL;
+const PASSWORD = process.env.E2E_ADMIN_PASSWORD;
+
+test.describe("owner-written French content", () => {
+  test.skip(!EMAIL || !PASSWORD, "Set E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD (see README -> Testing)");
+  test.use({ storageState: ADMIN_STATE });
+
+  const name = `E2E Faucon ${Date.now().toString(36)}`;
+  const FR_HEADLINE = "Titre français E2E";
+  const FR_DESC = "Description française E2E : très bon état.";
+  let slug = "";
+  let productId = "";
+
+  test("saving French text in the admin shows it to French visitors only", async ({ page, browser }) => {
+    await page.goto("/admin/settings");
+    await page.getByLabel("Homepage headline (French)").fill(FR_HEADLINE);
+    await page.getByRole("button", { name: "Save settings" }).click();
+    await expect(page.getByText("Settings saved.")).toBeVisible();
+
+    await page.goto("/admin/products/new");
+    await page.getByLabel(/Product name/).fill(name);
+    await page.getByLabel(/^Price/).fill("1850");
+    await page.getByLabel("Description", { exact: true }).fill("English description E2E.");
+    await page.getByLabel("Description (French)").fill(FR_DESC);
+    await page.getByRole("button", { name: "Save and add photos" }).click();
+    await expect(page).toHaveURL(/\/admin\/products\/[0-9a-f-]{36}\?created=1/);
+    productId = page.url().match(/products\/([0-9a-f-]{36})/)![1];
+    slug = (await page.getByRole("link", { name: "View on the website" }).getAttribute("href"))!.replace("/pcs/", "");
+
+    const fr = await newVisitor(browser, { locale: "fr-FR" });
+    const frPage = await fr.newPage();
+    await frPage.goto("/");
+    await expect(frPage.getByRole("heading", { level: 1 })).toHaveText(FR_HEADLINE);
+    await frPage.goto(`/pcs/${slug}`);
+    await expect(frPage.getByText(FR_DESC)).toBeVisible();
+    await expect(frPage.getByText("English description E2E.")).toHaveCount(0);
+    await fr.close();
+
+    const en = await newVisitor(browser, { locale: "en-US" });
+    const enPage = await en.newPage();
+    await enPage.goto(`/pcs/${slug}`);
+    await expect(enPage.getByText("English description E2E.")).toBeVisible();
+    await expect(enPage.getByText(FR_DESC)).toHaveCount(0);
+    await en.close();
+  });
+
+  test("cleanup: remove the French headline and the test product", async ({ page }) => {
+    await page.goto("/admin/settings");
+    await page.getByLabel("Homepage headline (French)").fill("");
+    await page.getByRole("button", { name: "Save settings" }).click();
+    await expect(page.getByText("Settings saved.")).toBeVisible();
+
+    await page.goto(`/admin/products/${productId}`);
+    page.once("dialog", (d) => void d.accept());
+    await page.getByRole("button", { name: "Delete permanently" }).click();
+    await expect(page).toHaveURL(/\/admin\/products\?deleted=1/);
   });
 });

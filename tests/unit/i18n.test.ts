@@ -9,6 +9,7 @@ import { en } from "@/i18n/messages/en";
 import { fr } from "@/i18n/messages/fr";
 import { createT, translateIfKey } from "@/i18n/translate";
 import { DEFAULT_SETTINGS } from "@/lib/data";
+import { buildTranslations } from "@/lib/validation";
 
 describe("dictionaries", () => {
   it("French defines exactly the same keys as English", () => {
@@ -228,5 +229,27 @@ describe("French chatbot", () => {
 
   it("French keyword search finds PCs by spec", () => {
     expect(respond("avez-vous quelque chose avec une rtx 4070", ctx()).products?.[0].id).toBe("c");
+  });
+});
+
+describe("admin French fields", () => {
+  const form = (o: Record<string, string>) => (k: string) => o[k] ?? "";
+
+  it("keeps only the filled French fields and trims them", () => {
+    const tr = buildTranslations(form({ fr_description: "  Bon état  ", fr_condition: "" }), { description: 100, condition: 100 });
+    expect(tr).toEqual({ fr: { description: "Bon état" } });
+  });
+
+  it("returns an empty object when nothing is filled, so the main text is used", () => {
+    expect(buildTranslations(form({}), { description: 100 })).toEqual({});
+  });
+
+  it("cuts text at the same limit as the main field and parses Title | description lines", () => {
+    const tr = buildTranslations(form({ fr_tagline: "x".repeat(300), fr_highlights: "Testé | Chaque PC est vérifié\nGarantie" }), { tagline: 160 }, ["highlights"]);
+    expect((tr as { fr: { tagline: string } }).fr.tagline).toHaveLength(160);
+    expect((tr as { fr: { highlights: unknown } }).fr.highlights).toEqual([
+      { title: "Testé", description: "Chaque PC est vérifié" },
+      { title: "Garantie", description: "" },
+    ]);
   });
 });

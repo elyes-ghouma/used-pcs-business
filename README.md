@@ -38,7 +38,7 @@ npm run dev                    # http://localhost:3000
 
 ### 2. Database migrations
 
-The schema lives in [`supabase/migrations`](supabase/migrations). Apply the seven files **in order**:
+The schema lives in [`supabase/migrations`](supabase/migrations). Apply the eight files **in order**:
 
 | File | Contents |
 |---|---|
@@ -49,6 +49,7 @@ The schema lives in [`supabase/migrations`](supabase/migrations). Apply the seve
 | `20261118110000_fk_indexes.sql` | Foreign-key indexes (performance advisor) |
 | `20261118120000_private_schema.sql` | Private schema: gateway key hash, rate-limit ledger, helpers (not exposed through the API) |
 | `20261118120100_gateway_limits_audit.sql` | Gateway key required for public writes, database-side rate limits and retention, seller-joins-stops-bot, audit log, security events |
+| `20261118130000_translations.sql` | Optional French text columns (`translations`) and the default website language |
 
 Option A, no tools needed: open **SQL Editor** in the Supabase dashboard, paste each file in order and run it.
 Option B, Supabase CLI: `supabase link --project-ref <ref>` then `supabase db push`.
@@ -94,6 +95,12 @@ The API accepts anyone with the public key to attempt sign-ups; turning this off
 
 1. **Settings**: business name, contacts (phone, WhatsApp number in international format, Messenger link), location, working hours, currency (default `TND`), delivery / payment / warranty text, FAQ.
 2. **Products → Add a PC**, save, then add photos.
+
+### Languages (English and French)
+
+The public website is available in English and French; the admin dashboard stays in English. A visitor sees their saved choice (the EN / FR buttons in the header), else their browser's language, else the **Default website language** you pick in *Settings -> Languages* (link previews on Facebook or WhatsApp send no language, so they get that one: choose French if your customers are French-speaking). The chatbot understands both languages and answers in the language of the page.
+
+Interface text lives in `src/i18n/messages` (`en.ts` is the source of keys, `fr.ts` must have every key; a unit test enforces it). The text you write yourself (headline, policies, FAQ, product descriptions, testimonials) is stored once in your main language; each form has an optional **French** field. Leave it empty and French visitors see the main text. Prices, specs and product names are never translated. Please have a native French speaker read `fr.ts` before launch.
 
 The catalog starts empty, with no demo data. Sections such as *Why buy from us* and *Testimonials* stay hidden until you add real content.
 
@@ -144,6 +151,8 @@ The catalog starts empty, with no demo data. Sections such as *Why buy from us* 
 
   Without any Supabase variables, the database-free part still runs (layout on desktop and phone, no horizontal scroll, form validation, sitemap/robots): `npx playwright test e2e/public.spec.ts --grep-invert "chat widget"`. Admin tests are skipped unless the `E2E_*` variables are set; the admin tests sign in once and reuse the session.
 
+  **Re-running soon after a run.** The contact form allows 3 messages per phone number per 10 minutes, and the specs reuse the same test numbers, so a second run within 10 minutes can fail on the contact form. Run the cleanup SQL below (at least the first two lines) between runs.
+
   **Cleanup.** The e2e run voids its sale and *archives* its PC (a PC that ever had a sale can't be deleted, by design). It also leaves a few `E2E ...`/`SEC ...` inquiries, chat conversations and click events behind. On the test project you can remove everything in the SQL Editor:
 
   ```sql
@@ -177,7 +186,7 @@ The application treats the browser and the public Supabase key as untrusted: eve
 
 - **WhatsApp / Messenger conversations are invisible to the site.** The dashboard records *button clicks* (labelled as such), not messages. Messenger links cannot prefill text, so the site copies the message to the clipboard instead.
 - **Spam protection is strong but not absolute**: there is no CAPTCHA, and a large flood from many addresses can make the database refuse real visitors for a while (see `SECURITY.md` L2).
-- The chatbot understands English and a few French keywords; it is rule-based, not an AI. `FallbackResponder` in `src/lib/chatbot/types.ts` is the plug-in point if you later add an AI provider (server-side key, optional, with this engine as the fallback).
+- The chatbot understands English and French (common phrasings, with or without accents); it is rule-based, not an AI, and unusual wording gets an honest fallback. `FallbackResponder` in `src/lib/chatbot/types.ts` is the plug-in point if you later add an AI provider (server-side key, optional, with this engine as the fallback).
 - The chat shows seller replies by polling every 6 seconds while open (the admin inbox uses Realtime).
 - The in-memory per-IP rate limiter protects a single server instance only; the database limits are the real guarantee.
 - Bot-only chats are deleted after 3 days. Conversations the seller took part in are kept until you delete them.

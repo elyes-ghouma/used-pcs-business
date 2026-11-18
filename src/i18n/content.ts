@@ -48,6 +48,11 @@ export const SETTINGS_TEXT_FIELDS = [
 export const SETTINGS_LIST_FIELDS = ["highlights", "how_to_buy"] as const;
 export const PRODUCT_TEXT_FIELDS = ["description", "condition", "testing_info", "accessories", "warranty_info"] as const;
 
+/** Current French values for the admin forms (empty string when none). */
+export const frField = (tr: Tr, field: string): string => text(tr, "fr", field) ?? "";
+export const frLines = (tr: Tr, field: string): string =>
+  (list(tr, "fr", field) ?? []).map((i) => (i.description ? `${i.title} | ${i.description}` : i.title)).join("\n");
+
 export function localizeSettings(s: Settings, locale: Locale): Settings {
   if (locale === "en") return s;
   const out: Settings = { ...s };

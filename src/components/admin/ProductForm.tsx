@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { frField } from "@/i18n/content";
 import type { ActionState } from "@/lib/validation";
 import type { Product } from "@/lib/types";
 import { Area, Field, FormBanner } from "./fields";
@@ -18,6 +19,7 @@ export function ProductForm({
 }) {
   const [state, formAction, pending] = useActionState(action, initial);
   const e = state.fieldErrors;
+  const tr = product?.translations;
   const extra = (product?.extra_specs ?? []).map((s) => `${s.label}: ${s.value}`).join("\n");
 
   return (
@@ -65,6 +67,16 @@ export function ProductForm({
         <Area name="testing_info" label="Testing information" errors={e} defaultValue={product?.testing_info} hint="Only write tests you actually performed." />
         <Area name="accessories" label="Included accessories" errors={e} defaultValue={product?.accessories} />
         <Field name="warranty_info" label="Warranty information" errors={e} defaultValue={product?.warranty_info} maxLength={1000} hint="Leave empty if there is no warranty on this PC." />
+      </fieldset>
+
+      <fieldset className="panel space-y-4 p-5">
+        <legend className="px-1 font-display text-2xl font-bold">French version (optional)</legend>
+        <p className="hint -mt-2">Shown to French visitors instead of the text above. Leave a field empty to show the main text. The name, price and specifications are not translated.</p>
+        <Area name="fr_description" label="Description (French)" errors={e} defaultValue={frField(tr, "description")} rows={4} maxLength={5000} />
+        <Field name="fr_condition" label="Condition (French)" errors={e} defaultValue={frField(tr, "condition")} maxLength={500} />
+        <Area name="fr_testing_info" label="Testing information (French)" errors={e} defaultValue={frField(tr, "testing_info")} maxLength={2000} />
+        <Area name="fr_accessories" label="Included accessories (French)" errors={e} defaultValue={frField(tr, "accessories")} maxLength={1000} />
+        <Field name="fr_warranty_info" label="Warranty information (French)" errors={e} defaultValue={frField(tr, "warranty_info")} maxLength={1000} />
       </fieldset>
 
       <div className="flex flex-wrap items-center gap-3">

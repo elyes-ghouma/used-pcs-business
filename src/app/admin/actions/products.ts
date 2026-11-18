@@ -9,7 +9,7 @@ import { reencodeToWebp } from "@/lib/image-process";
 import { detectImageKind, isValidMediaPath, MAX_IMAGES_PER_PRODUCT, MAX_IMAGE_BYTES, MEDIA_BUCKET } from "@/lib/images";
 import { makeProductSlug } from "@/lib/slug";
 import type { ProductStatus } from "@/lib/types";
-import { flattenErrors, productSchema, type ActionState } from "@/lib/validation";
+import { buildTranslations, flattenErrors, PRODUCT_FR_TEXT, productSchema, type ActionState } from "@/lib/validation";
 
 async function guard() {
   try {
@@ -32,6 +32,8 @@ function parseProductForm(formData: FormData) {
   });
 }
 
+const frenchOf = (formData: FormData) => buildTranslations((k) => String(formData.get(k) ?? ""), PRODUCT_FR_TEXT);
+
 function refresh(slug?: string) {
   revalidatePath("/admin", "layout");
   revalidatePath("/");
@@ -46,7 +48,7 @@ export async function createProductAction(_prev: ActionState, formData: FormData
   if (!parsed.success) return { ok: false, message: "Please fix the highlighted fields.", fieldErrors: flattenErrors(parsed.error) };
 
   const slug = makeProductSlug(parsed.data.name);
-  const { data, error } = await admin.supabase.from("products").insert({ ...parsed.data, slug }).select("id").single();
+  const { data, error } = await admin.supabase.from("products").insert({ ...parsed.data, translations: frenchOf(formData), slug }).select("id").single();
   if (error || !data) return { ok: false, message: "Could not save the product. Please try again." };
   refresh(slug);
   redirect(`/admin/products/${data.id}?created=1`);
@@ -59,7 +61,7 @@ export async function updateProductAction(productId: string, _prev: ActionState,
   const parsed = parseProductForm(formData);
   if (!parsed.success) return { ok: false, message: "Please fix the highlighted fields.", fieldErrors: flattenErrors(parsed.error) };
 
-  const { data, error } = await admin.supabase.from("products").update(parsed.data).eq("id", productId).select("slug").single();
+  const { data, error } = await admin.supabase.from("products").update({ ...parsed.data, translations: frenchOf(formData) }).eq("id", productId).select("slug").single();
   if (error || !data) return { ok: false, message: "Could not save the changes. Please try again." };
   refresh(data.slug);
   return { ok: true, message: "Changes saved." };
