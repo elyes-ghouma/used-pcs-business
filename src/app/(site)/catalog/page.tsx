@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FiltersPanel } from "@/components/FiltersPanel";
 import { ProductCard } from "@/components/ProductCard";
 import { CATALOG_PAGE_SIZE, parseCatalogParams } from "@/lib/catalog-params";
 import { getFilterOptions, getSettings, listProducts } from "@/lib/data";
@@ -62,6 +63,8 @@ export default async function CatalogPage({ searchParams }: { searchParams: SP }
   };
   const hasFilters = Boolean(filters.q || filters.cpu || filters.gpu || filters.ram || filters.storage || filters.minPrice !== null || filters.maxPrice !== null || filters.status !== "all");
 
+  const activeCount = [filters.q, filters.cpu, filters.gpu, filters.ram, filters.storage, filters.minPrice !== null ? "x" : "", filters.maxPrice !== null ? "x" : "", filters.status !== "all" ? "x" : ""].filter(Boolean).length;
+
   return (
     <div className="container-page py-10">
       <h1 className="text-5xl">Gaming PCs</h1>
@@ -71,7 +74,8 @@ export default async function CatalogPage({ searchParams }: { searchParams: SP }
       </p>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[17rem_1fr]">
-        <form method="get" action="/catalog" className="panel h-fit space-y-4 p-4" aria-label="Filter PCs">
+        <FiltersPanel activeCount={activeCount}>
+        <form method="get" action="/catalog" className="panel space-y-4 p-4" aria-label="Filter PCs">
           <div>
             <label htmlFor="f-q" className="label">Search</label>
             <input id="f-q" name="q" type="search" defaultValue={filters.q} placeholder="Name, CPU, GPU..." className="field" maxLength={80} />
@@ -112,6 +116,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: SP }
             {hasFilters && <Link href="/catalog" className="btn-secondary">Reset</Link>}
           </div>
         </form>
+        </FiltersPanel>
 
         <section aria-label="Results">
           {failed ? (

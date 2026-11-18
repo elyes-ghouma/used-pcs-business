@@ -4,7 +4,7 @@ import { respond } from "@/lib/chatbot/engine";
 import type { BotContext } from "@/lib/chatbot/types";
 import { fetchState, readToken, startConversation } from "@/lib/chat-server";
 import { getAllVisibleProducts, getFaqs, getSettings } from "@/lib/data";
-import { clientIp, rateLimit } from "@/lib/ratelimit";
+import { clientIp, isSameOrigin, rateLimit } from "@/lib/ratelimit";
 import { createPublicClient, isSupabaseConfigured } from "@/lib/supabase/public";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +35,7 @@ export async function GET(request: Request) {
 
 /** A visitor message: stored, then answered by the deterministic bot unless the seller has been called in. */
 export async function POST(request: Request) {
+  if (!isSameOrigin(request)) return fail(403, "forbidden");
   if (!isSupabaseConfigured()) return fail(503, "not_configured");
   if (!rateLimit(`chat-post:${clientIp(request.headers)}`, 20, 60_000)) return fail(429, "rate_limited");
 

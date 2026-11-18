@@ -34,5 +34,6 @@ export function extensionFor(kind: ImageKind): string {
 
 /** Storage paths this app creates; anything else is rejected before touching the database. */
 export function isValidMediaPath(path: string, prefix: string): boolean {
-  return new RegExp(`^${prefix}/[0-9a-f-]{36}\.(jpg|png|webp)$`).test(path);
+  const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp("^" + escaped + "/[0-9a-f-]{36}\\.(jpg|png|webp)$").test(path);
 }

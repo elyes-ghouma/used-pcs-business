@@ -80,6 +80,10 @@ describe("images", () => {
     expect(isValidMediaPath(`products/${id}/../../x.jpg`, `products/${id}`)).toBe(false);
     expect(isValidMediaPath(`branding/${id}.png`, "branding")).toBe(true);
     expect(isValidMediaPath(`branding/${id}.svg`, "branding")).toBe(false);
+    expect(isValidMediaPath(`branding/${id}xpng`, "branding")).toBe(false); // the dot must be a literal dot
+    expect(isValidMediaPath(`brandingX/${id}.png`, "branding")).toBe(false);
+    expect(isValidMediaPath(`a.b/${id}.png`, "a.b")).toBe(true);
+    expect(isValidMediaPath(`aXb/${id}.png`, "a.b")).toBe(false); // prefix is escaped too
   });
 });
 

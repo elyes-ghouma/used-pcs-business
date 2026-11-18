@@ -18,6 +18,17 @@ export function rateLimit(key: string, max: number, windowMs: number, now = Date
   return true;
 }
 
+/** Rejects cross-site POSTs to cookie-based public endpoints (browsers always send Origin on cross-site POSTs). */
+export function isSameOrigin(request: Request): boolean {
+  const origin = request.headers.get("origin");
+  if (!origin) return true; // non-browser clients and same-origin GET-like requests
+  try {
+    return new URL(origin).host === request.headers.get("host");
+  } catch {
+    return false;
+  }
+}
+
 export function clientIp(headers: Headers): string {
   return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || "unknown";
 }

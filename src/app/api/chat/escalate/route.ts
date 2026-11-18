@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { fetchState, readToken, startConversation } from "@/lib/chat-server";
-import { clientIp, rateLimit } from "@/lib/ratelimit";
+import { clientIp, isSameOrigin, rateLimit } from "@/lib/ratelimit";
 import { createPublicClient, isSupabaseConfigured } from "@/lib/supabase/public";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +15,7 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  if (!isSameOrigin(request)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   if (!isSupabaseConfigured()) return NextResponse.json({ error: "not_configured" }, { status: 503 });
   if (!rateLimit(`chat-escalate:${clientIp(request.headers)}`, 5, 10 * 60_000)) {
     return NextResponse.json({ error: "rate_limited", message: "Too many requests. Please wait a few minutes." }, { status: 429 });
