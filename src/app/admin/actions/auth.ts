@@ -17,7 +17,11 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { ok: false, message: "Incorrect email or password." };
+  if (error) {
+    // Only a real credentials rejection (HTTP 400) is "incorrect"; anything else is a connection/config problem.
+    if (error.status === 400 || error.code === "invalid_credentials") return { ok: false, message: "Incorrect email or password." };
+    return { ok: false, message: "Could not reach the sign-in service. Check NEXT_PUBLIC_SUPABASE_URL in .env.local, then restart the server." };
+  }
 
   // Signed in is not the same as admin: check the admins table, otherwise sign straight back out.
   const { data: isAdmin } = await supabase.rpc("is_admin");
