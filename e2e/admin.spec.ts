@@ -30,7 +30,8 @@ test.describe("signed out", () => {
     await page.getByLabel("Email").fill(EMAIL!);
     await page.getByLabel("Password").fill("definitely-not-the-password");
     await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page.getByRole("alert")).toContainText("Incorrect email or password");
+    // (Next.js also renders a hidden role=alert route announcer, so match the message itself.)
+    await expect(page.getByText("Incorrect email or password.")).toBeVisible();
   });
 });
 
@@ -94,7 +95,11 @@ test.describe("owner workflow", () => {
     await expect(item).toContainText(NAME);
     await item.getByLabel("Status").selectOption("contacted");
     await item.getByLabel("Internal notes").fill("Called, coming Friday");
-    await item.getByRole("button", { name: "Save" }).click();
+    // Wait for the server action to finish before reloading, otherwise the reload cancels it.
+    await Promise.all([
+      page.waitForResponse((r) => r.request().method() === "POST" && r.url().includes("/admin/inquiries")),
+      item.getByRole("button", { name: "Save" }).click(),
+    ]);
     await page.reload();
     await expect(page.getByRole("listitem").filter({ hasText: `E2E Visitor ${run}` }).getByLabel("Status")).toHaveValue("contacted");
   });
@@ -111,6 +116,8 @@ test.describe("owner workflow", () => {
     await expect(dialog.getByText(/The seller has your message/).first()).toBeVisible();
 
     await page.goto("/admin/inbox");
+    // The Realtime subscription must actually connect (not just the 20 s polling fallback).
+    await expect(page.getByText(/Live: new messages appear automatically/)).toBeVisible({ timeout: 15_000 });
     await page.getByRole("button", { name: new RegExp(`E2E Chatter ${run}`) }).click();
     await expect(page.getByText(NAME).first()).toBeVisible();
     await page.getByLabel("Reply").fill("Hello! Yes, it is still here.");

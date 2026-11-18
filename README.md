@@ -92,11 +92,30 @@ The catalog starts empty, with no demo data. Sections such as *Why buy from us* 
 
 - **Unit / logic** (`tests/unit`): chatbot (budget, availability, comparison, "never invents data"), validation, price formatting, contact links, image signature checks, rate limiting.
 - **Database** (`tests/db`): applies the real migration files to PGlite and verifies RLS (anon and non-admin users are blocked), admin-only functions, one active sale per product, status guard + history, voiding sales, revenue maths, inquiry validation and rate limits, chat tokens and escalation, bucket limits. Runs in CI with no secrets.
+- **Live API tests** (`tests/integration/live.test.ts`): the same security rules checked through the real Supabase API with the public key and a real admin sign-in (RLS, admin-only functions, sale lifecycle and double-sale refusal, chat tokens, storage bucket type/size limits). They skip themselves unless the Supabase variables and `E2E_ADMIN_*` are set, so CI is unaffected.
 - **End-to-end** (`e2e`): Playwright drives a real browser through the public site, admin login/logout, product creation with a photo, reserving, inquiry → admin, chat → admin reply → visitor, recording a sale, and the duplicate-sale guard. It needs a **test** Supabase project: apply the migrations, create an admin there, and set `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` in `.env.local`. Do not point it at your live shop (it creates records prefixed `E2E`).
 
   ```bash
   npx playwright install chromium
   npm run test:e2e
+  ```
+
+  To create the test admin on a **test** project (SQL Editor; pick your own password, and delete this user when you are done):
+
+  ```sql
+  do $$
+  declare uid uuid := gen_random_uuid();
+  begin
+    insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+      raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, recovery_token,
+      email_change_token_new, email_change, email_change_token_current, phone_change, phone_change_token, reauthentication_token)
+    values ('00000000-0000-0000-0000-000000000000', uid, 'authenticated', 'authenticated', 'e2e-admin@example.test',
+      extensions.crypt('CHOOSE-A-PASSWORD', extensions.gen_salt('bf')), now(),
+      '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '', '', '', '', '');
+    insert into auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+    values (gen_random_uuid(), uid, uid::text, jsonb_build_object('sub', uid::text, 'email', 'e2e-admin@example.test', 'email_verified', true), 'email', now(), now(), now());
+    insert into public.admins (user_id) values (uid);
+  end $$;
   ```
 
   Without any Supabase variables, the database-free part still runs (layout on desktop and phone, no horizontal scroll, form validation, sitemap/robots): `npx playwright test e2e/public.spec.ts --grep-invert "chat widget"`. Admin tests are skipped unless the `E2E_*` variables are set; the admin tests sign in once and reuse the session.
