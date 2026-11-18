@@ -25,7 +25,7 @@ Admin accounts and sessions; customer contact details and messages; sales/revenu
 | No public registration | There is no sign-up page. (See limitation L1: Supabase sign-ups should also be switched off.) |
 | Password policy | At least 12 characters; common passwords, "common word + digits", simple sequences and the email name are rejected (`src/lib/password.ts`, unit tested). The real, enforced minimum is Supabase's own setting. |
 | Login throttling | In-memory per-IP limit (8 per 10 min) **and** database throttle per visitor (12 per 10 min) and per account (20 per 10 min, hashed email), shared by all server instances. Generic error message. |
-| Session lifetime | An admin session is valid for at most **12 hours** after the password was entered, read from the JWT `amr` claim (refreshing a token does not extend it). |
+| Session lifetime | An admin session is valid for at most **12 hours** after the password was entered, read from the JWT `amr` claim (refreshing a token does not extend it). The rule is a pure function (`src/lib/session.ts`) covered by unit tests; the wiring to Supabase is covered by the admin e2e sign-in only. |
 | Logout | Ends the current session. |
 | Password change | Requires the current password; signs out all other sessions. |
 | Password reset | Emailed one-time link (PKCE code exchange) to `/auth/callback`, destination allow-listed; always answers with the same message (no account discovery); throttled like login. |
@@ -66,7 +66,7 @@ Two layers; the database layer cannot be bypassed by skipping the website.
 ## 7. Input handling, XSS, headers
 
 - All server inputs are validated (Zod in the app, constraints and checks in SQL). Queries are parameterised; search text is stripped of filter syntax.
-- User text is only ever rendered as text by React. The single `dangerouslySetInnerHTML` is JSON-LD with `<` escaped.
+- User text is only ever rendered as text by React. The single `dangerouslySetInnerHTML` is JSON-LD built by `jsonLdString()` (escapes `<` and U+2028/U+2029; unit tested with `</script>` payloads).
 - Headers on every page: `Content-Security-Policy` (scripts, styles and fonts from this site only; images and API/Realtime only to this site and your Supabase project; no framing, no objects, forms only to this site), `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`. Admin and API responses are `no-store`. `X-Powered-By` is removed.
 - Redirects after login/reset use fixed or allow-listed paths only.
 

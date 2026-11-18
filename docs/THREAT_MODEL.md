@@ -68,7 +68,7 @@ Record / void a sale; change a price or stock status; delete/archive a product; 
 | 8 | Stored XSS through inquiries, chat, product text, notes | React escapes all text; no `dangerouslySetInnerHTML` except JSON-LD (escaped); CSP | e2e (payloads rendered as text, no script runs, no dialogs) |
 | 9 | SQL injection via catalog filters/search | Parameterised PostgREST/RPC calls; search terms sanitised; DB constraints | Unit + live + e2e |
 | 10 | Malicious upload (script, SVG, polyglot, EXIF, decompression bomb) | Bucket MIME/size limits, magic-byte check, server decode and re-encode to WebP under a server-generated name, pixel cap | Live (bucket), unit (sharp), e2e (polyglot -> clean WebP) |
-| 11 | CSRF / cross-site posting | Server actions use Next's Origin check; JSON endpoints check `Origin`; cookies `SameSite=Lax` | e2e (cross-site 403) |
+| 11 | CSRF / cross-site posting | Server actions use Next's Origin check; JSON endpoints check `Origin`; cookies `SameSite=Lax` | e2e (cross-site 403 on JSON endpoints; `e2e/csrf-actions.spec.ts` replays a real Server Action request from forged origins and sees it aborted) |
 | 12 | Open redirect via the reset link | Destination allow-list | e2e |
 | 13 | Secrets leak to the browser or git | `server-only` gateway module; no service-role key used anywhere; secret scanner (source, history, bundle) | Scanner self-tested; CI step |
 | 14 | Clickjacking, MIME sniffing, downgrade | `X-Frame-Options`, `frame-ancestors 'none'`, `nosniff`, HSTS | e2e header checks |
