@@ -134,7 +134,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: SP }
             </div>
           ) : (
             <>
-              <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              <ul className="grid gap-6 md:grid-cols-2 min-[1500px]:grid-cols-3">
                 {products.map((p, i) => (
                   <li key={p.id}><ProductCard product={p} currency={settings.currency} priority={i < 3} /></li>
                 ))}

@@ -55,7 +55,7 @@ export function SettingsForm({ settings }: { settings: Settings }) {
         <Area name="highlights" label="Why buy from us" defaultValue={toLines(settings.highlights)} errors={e} rows={5} hint="One point per line as Title | description (up to 8). Only write what is true. The section is hidden when empty." />
         <Area name="how_to_buy" label="How to buy" defaultValue={toLines(settings.how_to_buy)} errors={e} rows={4} hint="One step per line as Title | description (up to 8)." />
         <label className="flex min-h-11 cursor-pointer items-center gap-3">
-          <input type="checkbox" name="show_sold_products" defaultChecked={settings.show_sold_products} className="size-5 accent-[var(--copper)]" />
+          <input type="checkbox" name="show_sold_products" defaultChecked={settings.show_sold_products} className="size-5 accent-[var(--accent)]" />
           <span>Keep sold PCs visible in the public catalog</span>
         </label>
       </fieldset>

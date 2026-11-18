@@ -15,13 +15,13 @@ export function LogoMark({ className = "size-8" }: { className?: string }) {
 export function Logo({ name, logoPath, href = "/" }: { name: string; logoPath: string | null; href?: string }) {
   const src = mediaUrl(logoPath);
   return (
-    <Link href={href} className="flex items-center gap-2.5 text-text" aria-label={`${name}, home`}>
+    <Link href={href} className="flex items-center gap-3 text-text" aria-label={`${name}, home`}>
       {src ? (
-        <Image src={src} alt="" width={40} height={40} className="size-10 rounded-md object-contain" />
+        <Image src={src} alt="" width={40} height={40} className="size-10 rounded object-contain" />
       ) : (
-        <LogoMark className="size-8 text-copper" />
+        <LogoMark className="size-8 text-accent" />
       )}
-      <span className="font-display text-2xl font-bold leading-none tracking-wide">{name}</span>
+      <span className="font-display text-[1.7rem] font-extrabold leading-none tracking-wide">{name}</span>
     </Link>
   );
 }

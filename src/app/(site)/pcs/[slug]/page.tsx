@@ -82,10 +82,14 @@ export default async function ProductPage({ params }: { params: Params }) {
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-[1.25fr_1fr]">
-        <div>
-          <ProductGallery images={images} name={product.name} soldOut={product.status === "sold"} />
+        {/* On phones the order is photo, price and contact, then the details; on large screens the contact column is sticky on the right. */}
+        <div className="max-lg:contents">
+          <div className="max-lg:order-1">
+            <ProductGallery images={images} name={product.name} soldOut={product.status === "sold"} />
+          </div>
+          <div className="max-lg:order-3 lg:mt-10">
           {product.description && (
-            <section aria-labelledby="desc-heading" className="mt-10">
+            <section aria-labelledby="desc-heading">
               <h2 id="desc-heading" className="text-3xl">Description</h2>
               <p className="mt-3 max-w-prose whitespace-pre-line text-muted">{product.description}</p>
             </section>
@@ -93,17 +97,19 @@ export default async function ProductPage({ params }: { params: Params }) {
           <section aria-labelledby="spec-heading" className="mt-10">
             <h2 id="spec-heading" className="text-3xl">Specifications</h2>
             {specs.length + extras.length > 0 ? (
-              <dl className="panel mt-4 divide-y divide-line-soft">
+              <dl className="mt-5 border-t border-line">
                 {specs.map(([label, value]) => (
-                  <div key={label} className="grid grid-cols-[8.5rem_1fr] gap-3 px-4 py-3 sm:grid-cols-[11rem_1fr]">
-                    <dt className="text-muted">{label}</dt>
-                    <dd className="spec-value break-words">{value}</dd>
+                  <div key={label} className="leader border-b border-line-soft py-3">
+                    <dt className="leader-label">{label}</dt>
+                    <span className="leader-fill" aria-hidden />
+                    <dd className="leader-value">{value}</dd>
                   </div>
                 ))}
                 {extras.map((e, i) => (
-                  <div key={`${e.label}-${i}`} className="grid grid-cols-[8.5rem_1fr] gap-3 px-4 py-3 sm:grid-cols-[11rem_1fr]">
-                    <dt className="text-muted">{e.label}</dt>
-                    <dd className="spec-value break-words">{e.value}</dd>
+                  <div key={`${e.label}-${i}`} className="leader border-b border-line-soft py-3">
+                    <dt className="leader-label">{e.label}</dt>
+                    <span className="leader-fill" aria-hidden />
+                    <dd className="leader-value">{e.value}</dd>
                   </div>
                 ))}
               </dl>
@@ -114,23 +120,24 @@ export default async function ProductPage({ params }: { params: Params }) {
           {(product.accessories || product.condition || product.testing_info || product.warranty_info) && (
             <section aria-labelledby="more-heading" className="mt-10">
               <h2 id="more-heading" className="text-3xl">Condition and guarantees</h2>
-              <dl className="panel mt-4 divide-y divide-line-soft">
-                {product.condition && <div className="px-4 py-3"><dt className="text-muted">Condition</dt><dd className="mt-1 whitespace-pre-line">{product.condition}</dd></div>}
-                {product.testing_info && <div className="px-4 py-3"><dt className="text-muted">Testing</dt><dd className="mt-1 whitespace-pre-line">{product.testing_info}</dd></div>}
-                {product.accessories && <div className="px-4 py-3"><dt className="text-muted">Included accessories</dt><dd className="mt-1 whitespace-pre-line">{product.accessories}</dd></div>}
-                {product.warranty_info && <div className="px-4 py-3"><dt className="text-muted">Warranty</dt><dd className="mt-1 whitespace-pre-line">{product.warranty_info}</dd></div>}
+              <dl className="mt-5 border-t border-line">
+                {product.condition && <div className="border-b border-line-soft py-4"><dt className="text-muted">Condition</dt><dd className="mt-1 whitespace-pre-line">{product.condition}</dd></div>}
+                {product.testing_info && <div className="border-b border-line-soft py-4"><dt className="text-muted">Testing</dt><dd className="mt-1 whitespace-pre-line">{product.testing_info}</dd></div>}
+                {product.accessories && <div className="border-b border-line-soft py-4"><dt className="text-muted">Included accessories</dt><dd className="mt-1 whitespace-pre-line">{product.accessories}</dd></div>}
+                {product.warranty_info && <div className="border-b border-line-soft py-4"><dt className="text-muted">Warranty</dt><dd className="mt-1 whitespace-pre-line">{product.warranty_info}</dd></div>}
               </dl>
             </section>
           )}
+          </div>
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:self-start">
+        <aside className="max-lg:order-2 lg:sticky lg:top-24 lg:self-start">
           <div className="panel space-y-5 p-6">
             <div className="flex items-start justify-between gap-3">
               <h1 className="text-4xl">{product.name}</h1>
               <StatusBadge status={product.status} className="mt-1.5 shrink-0" />
             </div>
-            <p className="font-display text-5xl font-bold text-copper-strong">{formatPrice(product.price, settings.currency)}</p>
+            <p className="font-display text-5xl font-bold text-accent-strong">{formatPrice(product.price, settings.currency)}</p>
             {!available && (
               <p className="rounded-md border border-line bg-bg px-3 py-2 text-sm text-muted">
                 {product.status === "reserved"

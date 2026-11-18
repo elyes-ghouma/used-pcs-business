@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Barlow_Condensed, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { Big_Shoulders, Instrument_Sans, Martian_Mono } from "next/font/google";
 import "./globals.css";
 
-const display = Barlow_Condensed({ variable: "--font-display", subsets: ["latin"], weight: ["600", "700"], display: "swap" });
-const body = IBM_Plex_Sans({ variable: "--font-body", subsets: ["latin"], weight: ["400", "500", "600"], display: "swap" });
-const mono = IBM_Plex_Mono({ variable: "--font-mono", subsets: ["latin"], weight: ["400", "500"], display: "swap" });
+// Big Shoulders: industrial signage caps for headings. Instrument Sans: body. Martian Mono: readouts and spec values only.
+const display = Big_Shoulders({ variable: "--font-display", subsets: ["latin"], weight: ["700", "800"], display: "swap" });
+const body = Instrument_Sans({ variable: "--font-body", subsets: ["latin"], weight: ["400", "500", "600", "700"], display: "swap" });
+const mono = Martian_Mono({ variable: "--font-mono", subsets: ["latin"], weight: ["400", "500"], display: "swap" });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -28,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh antialiased">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-copper focus:px-4 focus:py-2 focus:text-copper-ink"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-ink"
         >
           Skip to content
         </a>

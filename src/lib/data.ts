@@ -97,6 +97,16 @@ export async function getRecent(limit = 8): Promise<Product[]> {
   return (data ?? []) as Product[];
 }
 
+/** Real numbers for the hero readout: how many publicly visible PCs are available / reserved right now. */
+export async function getStockCounts(): Promise<{ available: number; reserved: number }> {
+  const { data } = await createPublicClient().from("products").select("status").limit(500);
+  const rows = (data ?? []) as { status: string }[];
+  return {
+    available: rows.filter((r) => r.status === "available").length,
+    reserved: rows.filter((r) => r.status === "reserved").length,
+  };
+}
+
 export const getProductBySlug = cache(async (slug: string): Promise<Product | null> => {
   if (!/^[a-z0-9-]{1,120}$/.test(slug)) return null;
   const { data } = await createPublicClient().from("products").select(PRODUCT_SELECT).eq("slug", slug).maybeSingle();

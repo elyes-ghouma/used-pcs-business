@@ -119,7 +119,7 @@ export function Inbox({ initial }: { initial: Conversation[] }) {
         <section aria-label="Conversations" className={`panel ${selected ? "hidden lg:block" : ""}`}>
           <div className="flex gap-1 border-b border-line p-2" role="tablist" aria-label="Filter conversations">
             {([["attention", `Needs reply${attentionCount ? ` (${attentionCount})` : ""}`], ["open", "Open"], ["resolved", "Resolved"]] as [Filter, string][]).map(([key, label]) => (
-              <button key={key} role="tab" aria-selected={filter === key} onClick={() => setFilter(key)} className={`btn btn-sm flex-1 ${filter === key ? "bg-raised text-copper-strong" : "text-muted"}`}>{label}</button>
+              <button key={key} role="tab" aria-selected={filter === key} onClick={() => setFilter(key)} className={`btn btn-sm flex-1 ${filter === key ? "bg-raised text-accent-strong" : "text-muted"}`}>{label}</button>
             ))}
           </div>
           {visible.length === 0 ? (
@@ -131,7 +131,7 @@ export function Inbox({ initial }: { initial: Conversation[] }) {
                   <button onClick={() => select(c.id)} aria-current={c.id === selectedId} className={`block w-full px-4 py-3 text-left hover:bg-raised ${c.id === selectedId ? "bg-raised" : ""}`}>
                     <span className="flex items-center justify-between gap-2">
                       <span className="truncate font-medium">{c.visitor_name || "Anonymous visitor"}</span>
-                      {c.needs_attention && c.status === "open" && <span className="shrink-0 rounded-full bg-copper px-2 text-xs font-semibold text-copper-ink">Needs reply</span>}
+                      {c.needs_attention && c.status === "open" && <span className="shrink-0 rounded-full bg-accent px-2 text-xs font-semibold text-accent-ink">Needs reply</span>}
                     </span>
                     <span className="block truncate text-sm text-muted">{c.products?.name ?? "General chat"}{!c.escalated ? " · bot only" : ""}</span>
                     <span className="block text-xs text-muted">{formatDate(c.last_message_at, true)}</span>
@@ -153,7 +153,7 @@ export function Inbox({ initial }: { initial: Conversation[] }) {
                   <h2 className="text-2xl">{selected.visitor_name || "Anonymous visitor"}</h2>
                   <p className="text-sm text-muted">{selected.visitor_contact || "No contact details given"}</p>
                   {selected.product_id && (
-                    <p className="text-sm">About: <Link href={`/admin/products/${selected.product_id}`} className="text-copper hover:text-copper-strong">{selected.products?.name ?? "product"}</Link></p>
+                    <p className="text-sm">About: <Link href={`/admin/products/${selected.product_id}`} className="text-accent hover:text-accent-strong">{selected.products?.name ?? "product"}</Link></p>
                   )}
                 </div>
                 <button onClick={toggleResolved} className="btn-secondary btn-sm">{selected.status === "open" ? "Mark resolved" : "Reopen"}</button>
@@ -164,7 +164,7 @@ export function Inbox({ initial }: { initial: Conversation[] }) {
                     <span className="mb-0.5 text-xs text-muted">
                       {m.sender === "visitor" ? "Visitor" : m.sender === "admin" ? "You" : "Automated reply"} &middot; {formatDate(m.created_at, true)}
                     </span>
-                    <p className={`max-w-[85%] whitespace-pre-line rounded-lg px-3 py-2 ${m.sender === "admin" ? "bg-copper text-copper-ink" : m.sender === "bot" ? "border border-dashed border-line bg-bg text-muted" : "bg-raised"}`}>{m.body}</p>
+                    <p className={`max-w-[85%] whitespace-pre-line rounded-lg px-3 py-2 ${m.sender === "admin" ? "bg-accent text-accent-ink" : m.sender === "bot" ? "border border-dashed border-line bg-bg text-muted" : "bg-raised"}`}>{m.body}</p>
                   </div>
                 ))}
               </div>

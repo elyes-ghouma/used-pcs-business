@@ -20,7 +20,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       <aside className="relative border-b border-line bg-surface lg:sticky lg:top-0 lg:h-dvh lg:border-b-0 lg:border-r">
         <div className="flex items-center justify-between gap-3 px-4 py-3 lg:flex-col lg:items-start lg:py-5">
           <Link href="/admin" className="flex items-center gap-2">
-            <LogoMark className="size-7 text-copper" />
+            <LogoMark className="size-7 text-accent" />
             <span className="font-display text-xl font-bold">Admin</span>
           </Link>
           <AdminNav badges={{ inquiries: newInquiries ?? 0, inbox: chats ?? 0 }} />

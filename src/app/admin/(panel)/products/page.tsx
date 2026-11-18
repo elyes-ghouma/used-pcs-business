@@ -70,12 +70,12 @@ export default async function ProductsPage({ searchParams }: { searchParams: SP 
                   {img && <Image src={img} alt="" fill sizes="64px" className="object-cover" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <Link href={`/admin/products/${p.id}`} className="block truncate text-lg font-medium hover:text-copper-strong">{p.name}</Link>
+                  <Link href={`/admin/products/${p.id}`} className="block truncate text-lg font-medium hover:text-accent-strong">{p.name}</Link>
                   <p className="truncate text-sm text-muted">{[p.cpu, p.gpu, p.ram].filter(Boolean).join(" | ") || "No specs listed"}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <span className="font-display text-2xl font-bold text-copper-strong">{formatPrice(p.price, settings.currency)}</span>
-                  <div className="flex items-center gap-2">{p.is_featured && <span className="text-xs text-copper">Featured</span>}<StatusBadge status={p.status} /></div>
+                  <span className="font-display text-2xl font-bold text-accent-strong">{formatPrice(p.price, settings.currency)}</span>
+                  <div className="flex items-center gap-2">{p.is_featured && <span className="text-xs text-accent">Featured</span>}<StatusBadge status={p.status} /></div>
                 </div>
                 <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
                   {p.status === "available" && (

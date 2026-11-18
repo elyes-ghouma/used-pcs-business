@@ -50,13 +50,13 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
         <div><label htmlFor="s-q" className="sr-only">Search</label><input id="s-q" name="q" defaultValue={q} placeholder="Search product or customer" className="field" /></div>
         <div><label htmlFor="s-from" className="sr-only">From date</label><input id="s-from" type="date" name="from" defaultValue={isDate(from) ? from : ""} className="field" aria-label="From date" /></div>
         <div><label htmlFor="s-to" className="sr-only">To date</label><input id="s-to" type="date" name="to" defaultValue={isDate(to) ? to : ""} className="field" aria-label="To date" /></div>
-        <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" name="voided" value="1" defaultChecked={showVoided} className="size-4 accent-[var(--copper)]" />Show voided</label>
+        <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" name="voided" value="1" defaultChecked={showVoided} className="size-4 accent-[var(--accent)]" />Show voided</label>
         <button className="btn-secondary">Filter</button>
       </form>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="panel p-4"><p className="text-sm text-muted">Sales in this view</p><p className="font-display text-4xl font-bold">{active.length}</p></div>
-        <div className="panel p-4"><p className="text-sm text-muted">Revenue in this view</p><p className="font-display text-4xl font-bold text-copper-strong">{formatPrice(revenue, cur)}</p></div>
+        <div className="panel p-4"><p className="text-sm text-muted">Revenue in this view</p><p className="font-display text-4xl font-bold text-accent-strong">{formatPrice(revenue, cur)}</p></div>
       </div>
 
       {error ? (
@@ -69,13 +69,13 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
             <li key={s.id} className={`panel p-4 ${s.is_voided ? "opacity-60" : ""}`}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-lg font-medium"><Link href={`/admin/products/${s.product_id}`} className="hover:text-copper-strong">{s.product_name}</Link>{s.is_voided && <span className="ml-2 rounded-full border border-bad/40 px-2 py-0.5 text-xs text-bad">Voided</span>}</p>
+                  <p className="text-lg font-medium"><Link href={`/admin/products/${s.product_id}`} className="hover:text-accent-strong">{s.product_name}</Link>{s.is_voided && <span className="ml-2 rounded-full border border-bad/40 px-2 py-0.5 text-xs text-bad">Voided</span>}</p>
                   <p className="text-sm text-muted">{formatDate(s.sold_at)} &middot; {[s.customer_name, s.customer_phone, s.customer_email].filter(Boolean).join(" · ") || "No customer details"}</p>
                   {s.notes && <p className="mt-1 whitespace-pre-line text-sm">{s.notes}</p>}
                   {s.is_voided && s.void_reason && <p className="mt-1 text-sm text-muted">Reason: {s.void_reason}</p>}
                 </div>
                 <div className="text-right">
-                  <p className={`font-display text-3xl font-bold ${s.is_voided ? "line-through" : "text-copper-strong"}`}>{formatPrice(s.sale_price, cur)}</p>
+                  <p className={`font-display text-3xl font-bold ${s.is_voided ? "line-through" : "text-accent-strong"}`}>{formatPrice(s.sale_price, cur)}</p>
                   {Number(s.sale_price) !== Number(s.listed_price) && <p className="text-xs text-muted">Listed at {formatPrice(s.listed_price, cur)}</p>}
                 </div>
               </div>

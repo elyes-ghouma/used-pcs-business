@@ -67,7 +67,7 @@ export function ImageManager({ productId, images }: { productId: string; images:
             <li key={img.id} className="overflow-hidden rounded-md border border-line bg-bg">
               <div className="relative aspect-[4/3]">
                 <Image src={img.url} alt={`Photo ${i + 1}${img.is_primary ? " (primary)" : ""}`} fill sizes="200px" className="object-cover" />
-                {img.is_primary && <span className="absolute left-2 top-2 rounded bg-copper px-2 py-0.5 text-xs font-semibold text-copper-ink">Primary</span>}
+                {img.is_primary && <span className="absolute left-2 top-2 rounded bg-accent px-2 py-0.5 text-xs font-semibold text-accent-ink">Primary</span>}
               </div>
               <div className="flex flex-wrap gap-1.5 p-2">
                 <button type="button" className="btn-secondary btn-sm" disabled={i === 0 || pending} onClick={() => move(i, -1)} aria-label={`Move photo ${i + 1} earlier`}>Earlier</button>

@@ -6,29 +6,26 @@ import { mediaUrl } from "@/lib/supabase/public";
 import type { Product } from "@/lib/types";
 import { StatusBadge } from "./StatusBadge";
 
+/** Shown when a PC has no photo yet: quiet graph paper, not a clip-art icon. */
 export function ProductImagePlaceholder() {
-  return (
-    <div className="flex size-full items-center justify-center bg-raised text-line" aria-hidden>
-      <svg viewBox="0 0 64 64" className="size-16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="18" y="6" width="28" height="52" rx="3" />
-        <circle cx="32" cy="20" r="6" />
-        <circle cx="32" cy="38" r="4" />
-        <path d="M24 50h16" />
-      </svg>
-    </div>
-  );
+  return <div className="photo-empty size-full" aria-hidden />;
 }
 
+/**
+ * A spec tag: photo, name, the four specs buyers ask about as a dotted-leader readout, and the price on its own strip.
+ * The whole card is one link (the title carries it), so there is no second "View details" button.
+ */
 export function ProductCard({ product, currency, priority = false }: { product: Product; currency: string; priority?: boolean }) {
   const image = sortImages(product)[0];
   const src = mediaUrl(image?.storage_path);
   const specs = (
     [["CPU", product.cpu], ["GPU", product.gpu], ["RAM", product.ram], ["Storage", product.storage]] as [string, string][]
   ).filter(([, v]) => v);
+  const sold = product.status === "sold";
 
   return (
-    <article className="group panel flex flex-col overflow-hidden transition-colors hover:border-copper/60">
-      <Link href={`/pcs/${product.slug}`} className="relative block aspect-[4/3] overflow-hidden bg-raised" tabIndex={-1} aria-hidden>
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-md border border-line bg-surface transition-colors hover:border-accent">
+      <div className="relative aspect-[4/3] overflow-hidden bg-raised">
         {src ? (
           <Image
             src={src}
@@ -36,35 +33,38 @@ export function ProductCard({ product, currency, priority = false }: { product: 
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             priority={priority}
-            className={`object-cover transition-transform duration-500 group-hover:scale-[1.03] ${product.status === "sold" ? "opacity-60 grayscale" : ""}`}
+            className={`object-cover transition-transform duration-500 group-hover:scale-[1.03] ${sold ? "opacity-60 grayscale" : ""}`}
           />
         ) : (
           <ProductImagePlaceholder />
         )}
-        <StatusBadge status={product.status} className="absolute left-3 top-3 bg-bg/85 backdrop-blur" />
-      </Link>
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <h3 className="text-2xl">
-          <Link href={`/pcs/${product.slug}`} className="hover:text-copper-strong">
+        <StatusBadge status={product.status} className="absolute left-3 top-3 bg-bg-deep/90" />
+      </div>
+
+      <div className="flex flex-1 flex-col gap-4 p-4">
+        <h3 className="text-[1.65rem] leading-[1.1]">
+          <Link href={`/pcs/${product.slug}`} className="after:absolute after:inset-0 after:content-[''] focus-visible:after:outline-2">
             {product.name}
           </Link>
         </h3>
-        {specs.length > 0 && (
-          <dl className="divide-y divide-line-soft text-sm">
+        {specs.length > 0 ? (
+          <dl className="space-y-2 text-sm">
             {specs.map(([k, v]) => (
-              <div key={k} className="flex justify-between gap-3 py-1.5">
-                <dt className="text-muted">{k}</dt>
-                <dd className="spec-value truncate text-right" title={v}>{v}</dd>
+              <div key={k} className="leader">
+                <dt className="leader-label">{k}</dt>
+                <span className="leader-fill" aria-hidden />
+                <dd className="leader-value max-w-[62%] truncate" title={v}>{v}</dd>
               </div>
             ))}
           </dl>
+        ) : (
+          <p className="text-sm text-muted">Specs not listed yet. Ask the seller.</p>
         )}
-        <div className="mt-auto flex items-end justify-between gap-3 pt-2">
-          <p className="font-display text-3xl font-bold text-copper-strong">{formatPrice(product.price, currency)}</p>
-          <Link href={`/pcs/${product.slug}`} className="btn-secondary btn-sm" aria-label={`View details of ${product.name}`}>
-            View details
-          </Link>
-        </div>
+      </div>
+
+      <div className="flex items-baseline justify-between gap-3 border-t border-line bg-raised px-4 py-3">
+        <p className="whitespace-nowrap font-display text-[1.85rem] font-extrabold leading-none text-accent-strong">{formatPrice(product.price, currency)}</p>
+        <span className="whitespace-nowrap text-sm text-muted group-hover:text-text">{sold ? "Sold" : "See specs"}</span>
       </div>
     </article>
   );

@@ -38,3 +38,13 @@ Visitor browser ──POST /api/chat──▶ Next.js route
 Admin inbox (browser) ◀── Supabase Realtime (RLS: admins only) ──▶ reply = INSERT messages(sender='admin')
 Visitor polls GET /api/chat?after=<id> every 6 s while the window is open
 ```
+
+## Visual design system
+
+Tokens live in `src/app/globals.css` (`:root` variables, mapped to Tailwind colours such as `bg-brand`, `text-accent`).
+
+- **Idea:** the shop's own vernacular, a BIOS / CPU-Z readout. Specs are `label ........ value` rows (`.leader`), values in Martian Mono; everything else is Instrument Sans; headings are Big Shoulders.
+- **Colour:** steel-graphite chassis (`--bg`), one flat **BIOS blue** (`--brand`) used only for the hero and the closing contact band, **signal amber** (`--accent`) for prices and actions.
+- **The one memorable element:** the hero's live stock readout (`StockReadout`), built from real database counts. It prints in line by line once (`.post-line`); reduced-motion disables it.
+- **Rules to keep it distinctive:** no boxes around every section (use rules and open lists), no all-caps eyebrow labels, mono only for data, one motion moment, blue never used as a body background.
+- Change the whole palette by editing the variables in `:root`; admin screens use the same tokens.

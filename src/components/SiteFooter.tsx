@@ -11,7 +11,7 @@ export function SiteFooter({ settings }: { settings: Settings }) {
   ].filter((s): s is { label: string; href: string } => Boolean(s.href));
 
   return (
-    <footer className="mt-24 border-t border-line bg-surface">
+    <footer className="border-t border-line bg-bg-deep">
       <div className="container-page grid gap-10 py-12 md:grid-cols-[1.4fr_1fr_1fr]">
         <div className="space-y-4">
           <Logo name={settings.business_name} logoPath={settings.logo_path} />

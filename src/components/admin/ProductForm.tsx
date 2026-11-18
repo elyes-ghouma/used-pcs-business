@@ -31,7 +31,7 @@ export function ProductForm({
           <Field name="price" label="Price" required errors={e} defaultValue={product ? String(Number(product.price)) : ""} inputMode="decimal" hint="Up to 3 decimals, e.g. 1850 or 1850.500" />
           <div className="flex items-end pb-2">
             <label className="flex min-h-11 cursor-pointer items-center gap-3">
-              <input type="checkbox" name="is_featured" defaultChecked={product?.is_featured} className="size-5 accent-[var(--copper)]" />
+              <input type="checkbox" name="is_featured" defaultChecked={product?.is_featured} className="size-5 accent-[var(--accent)]" />
               <span>Featured on the homepage</span>
             </label>
           </div>

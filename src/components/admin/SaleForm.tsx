@@ -30,7 +30,7 @@ export function SaleForm({
       <fieldset className="panel space-y-4 p-5">
         <legend className="px-1 font-display text-2xl font-bold">Sale</legend>
         <div>
-          <label htmlFor="productId" className="label">Product <span className="text-copper">*</span></label>
+          <label htmlFor="productId" className="label">Product <span className="text-accent">*</span></label>
           <select
             id="productId" name="productId" required value={productId} className="field"
             onChange={(ev) => {
@@ -49,7 +49,7 @@ export function SaleForm({
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="salePrice" className="label">Actual selling price ({currency}) <span className="text-copper">*</span></label>
+            <label htmlFor="salePrice" className="label">Actual selling price ({currency}) <span className="text-accent">*</span></label>
             <input id="salePrice" name="salePrice" required inputMode="decimal" value={price} onChange={(ev) => setPrice(ev.target.value)} className="field" aria-invalid={Boolean(e?.salePrice)} />
             {selected && <p className="hint">Listed price: {selected.price}</p>}
             {e?.salePrice && <p className="error-text">{e.salePrice[0]}</p>}

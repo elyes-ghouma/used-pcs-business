@@ -7,8 +7,8 @@ export function ProductGallery({ images, name, soldOut }: { images: { id: string
   const [index, setIndex] = useState(0);
   if (images.length === 0) {
     return (
-      <div className="panel flex aspect-[4/3] items-center justify-center text-muted" role="img" aria-label="No photos yet">
-        No photos yet
+      <div className="photo-empty flex aspect-[4/3] items-end rounded-md border border-line p-5" role="img" aria-label="No photos yet">
+        <p className="text-sm text-muted">No photos yet. Ask the seller for pictures.</p>
       </div>
     );
   }
@@ -35,7 +35,7 @@ export function ProductGallery({ images, name, soldOut }: { images: { id: string
                 onClick={() => setIndex(i)}
                 aria-label={`Show photo ${i + 1}`}
                 aria-current={i === index}
-                className={`relative block aspect-square w-full overflow-hidden rounded-md border ${i === index ? "border-copper" : "border-line hover:border-muted"}`}
+                className={`relative block aspect-square w-full overflow-hidden rounded-md border ${i === index ? "border-accent" : "border-line hover:border-muted"}`}
               >
                 <Image src={img.url} alt="" fill sizes="96px" className="object-cover" />
               </button>

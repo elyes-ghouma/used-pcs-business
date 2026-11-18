@@ -29,10 +29,10 @@ export function AdminNav({ badges }: { badges: { inquiries: number; inbox: numbe
               href={it.href}
               onClick={() => setOpen(false)}
               aria-current={active ? "page" : undefined}
-              className={`flex items-center justify-between rounded-md px-3 py-2.5 text-[0.95rem] ${active ? "bg-raised text-copper-strong" : "text-muted hover:bg-raised hover:text-text"}`}
+              className={`flex items-center justify-between rounded-md px-3 py-2.5 text-[0.95rem] ${active ? "bg-raised text-accent-strong" : "text-muted hover:bg-raised hover:text-text"}`}
             >
               {it.label}
-              {count > 0 && <span className="rounded-full bg-copper px-2 text-xs font-semibold text-copper-ink">{count}</span>}
+              {count > 0 && <span className="rounded-full bg-accent px-2 text-xs font-semibold text-accent-ink">{count}</span>}
             </Link>
           </li>
         );

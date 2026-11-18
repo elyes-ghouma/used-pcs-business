@@ -46,13 +46,13 @@ export default async function EditProductPage({ params, searchParams }: { params
         </div>
         <p className="mt-1 text-muted">{formatPrice(product.price, settings.currency)} &middot; added {formatDate(product.created_at)}</p>
         {sp.created && <p role="status" className="mt-3 rounded-md border border-ok/40 bg-ok/10 px-3 py-2 text-ok">Saved. You can now add photos below.</p>}
-        {!product.is_archived && <p className="mt-2 text-sm"><Link href={`/pcs/${product.slug}`} target="_blank" className="text-copper hover:text-copper-strong">View on the website</Link></p>}
+        {!product.is_archived && <p className="mt-2 text-sm"><Link href={`/pcs/${product.slug}`} target="_blank" className="text-accent hover:text-accent-strong">View on the website</Link></p>}
       </div>
 
       <section aria-labelledby="stock-heading" className="panel space-y-4 p-5">
         <h2 id="stock-heading" className="text-2xl">Stock status</h2>
         {product.status === "sold" ? (
-          <p className="text-muted">This PC is sold. To undo it, void the sale in <Link href="/admin/sales" className="text-copper underline">Sales</Link>.</p>
+          <p className="text-muted">This PC is sold. To undo it, void the sale in <Link href="/admin/sales" className="text-accent underline">Sales</Link>.</p>
         ) : (
           <div className="flex flex-wrap items-end gap-3">
             {product.status === "available" ? (

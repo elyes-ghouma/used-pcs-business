@@ -41,7 +41,7 @@ export default async function SettingsPage() {
                 <div><label htmlFor={`fa-${f.id}`} className="label">Answer</label><textarea id={`fa-${f.id}`} name="answer" defaultValue={f.answer} rows={3} className="field" required maxLength={2000} /></div>
                 <div><label htmlFor={`fk-${f.id}`} className="label">Keywords</label><input id={`fk-${f.id}`} name="keywords" defaultValue={f.keywords} className="field" maxLength={300} placeholder="test before, try, inspect" /></div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_published" defaultChecked={f.is_published} className="size-4 accent-[var(--copper)]" />Published</label>
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_published" defaultChecked={f.is_published} className="size-4 accent-[var(--accent)]" />Published</label>
                   <label className="flex items-center gap-2 text-sm">Order <input name="sort_order" type="number" defaultValue={f.sort_order} className="field w-20" /></label>
                   <button className="btn-secondary btn-sm">Save</button>
                 </div>
@@ -72,7 +72,7 @@ export default async function SettingsPage() {
                 <div><label htmlFor={`ta-${t.id}`} className="label">Customer name</label><input id={`ta-${t.id}`} name="author_name" defaultValue={t.author_name} className="field" required maxLength={80} /></div>
                 <div><label htmlFor={`tb-${t.id}`} className="label">What they said</label><textarea id={`tb-${t.id}`} name="body" defaultValue={t.body} rows={3} className="field" required maxLength={600} /></div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_published" defaultChecked={t.is_published} className="size-4 accent-[var(--copper)]" />Published</label>
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="is_published" defaultChecked={t.is_published} className="size-4 accent-[var(--accent)]" />Published</label>
                   <label className="flex items-center gap-2 text-sm">Order <input name="sort_order" type="number" defaultValue={t.sort_order} className="field w-20" /></label>
                   <button className="btn-secondary btn-sm">Save</button>
                 </div>

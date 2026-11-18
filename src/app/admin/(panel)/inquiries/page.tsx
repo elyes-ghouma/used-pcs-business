@@ -56,11 +56,11 @@ export default async function InquiriesPage({ searchParams }: { searchParams: Pr
                   <p className="text-lg font-medium">{i.name}{i.source === "chat" && <span className="ml-2 rounded-full border border-line px-2 py-0.5 text-xs text-muted">From chat</span>}</p>
                   <p className="text-sm text-muted">{[i.phone, i.email].filter(Boolean).join(" · ")} &middot; {formatDate(i.created_at, true)}</p>
                 </div>
-                <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${i.status === "new" ? "border-copper text-copper-strong" : "border-line text-muted"}`}>{INQUIRY_STATUS_LABEL[i.status]}</span>
+                <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${i.status === "new" ? "border-accent text-accent-strong" : "border-line text-muted"}`}>{INQUIRY_STATUS_LABEL[i.status]}</span>
               </div>
               <p className="mt-3 whitespace-pre-line">{i.message}</p>
               <p className="mt-2 text-sm text-muted">
-                About: {i.product_id ? <Link href={`/admin/products/${i.product_id}`} className="text-copper hover:text-copper-strong">{i.product_name || "product"}</Link> : i.product_name || "No specific PC"}
+                About: {i.product_id ? <Link href={`/admin/products/${i.product_id}`} className="text-accent hover:text-accent-strong">{i.product_name || "product"}</Link> : i.product_name || "No specific PC"}
               </p>
               <form action={updateInquiryAction.bind(null, i.id)} className="mt-4 grid gap-3 border-t border-line-soft pt-4 sm:grid-cols-[12rem_1fr_auto] sm:items-end">
                 <div>

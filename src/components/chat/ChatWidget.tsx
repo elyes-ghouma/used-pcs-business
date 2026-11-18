@@ -123,7 +123,7 @@ export function ChatWidget({ welcome, currency, workingHours, contact }: Props) 
       <button
         type="button"
         onClick={openChat}
-        className="fixed bottom-4 right-4 z-40 flex min-h-12 items-center gap-2 rounded-full bg-copper px-5 py-3 font-semibold text-copper-ink shadow-lg shadow-black/50 transition-colors hover:bg-copper-strong"
+        className="fixed bottom-4 right-4 z-40 flex min-h-12 items-center gap-2 rounded-full bg-accent px-5 py-3 font-semibold text-accent-ink shadow-lg shadow-black/50 transition-colors hover:bg-accent-strong"
         aria-label="Open chat"
       >
         <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -184,11 +184,11 @@ export function ChatWidget({ welcome, currency, workingHours, contact }: Props) 
                   <ul className="mt-2 space-y-2">
                     {m.meta.products.map((p) => (
                       <li key={p.id}>
-                        <Link href={`/pcs/${p.slug}`} onClick={() => undefined} className="block rounded-md border border-line bg-bg p-3 hover:border-copper">
+                        <Link href={`/pcs/${p.slug}`} onClick={() => undefined} className="block rounded-md border border-line bg-bg p-3 hover:border-accent">
                           <span className="block font-medium">{p.name}</span>
                           <span className="block text-sm text-muted">{p.summary.join(" | ")}</span>
                           <span className="mt-1 flex items-center justify-between text-sm">
-                            <span className="font-semibold text-copper-strong">{formatPrice(p.price, currency)}</span>
+                            <span className="font-semibold text-accent-strong">{formatPrice(p.price, currency)}</span>
                             <span className="text-muted">{STATUS_LABEL[p.status]}</span>
                           </span>
                         </Link>
@@ -243,7 +243,7 @@ export function ChatWidget({ welcome, currency, workingHours, contact }: Props) 
               <button type="submit" className="btn-primary" disabled={sending || input.trim() === ""}>Send</button>
             </form>
             {!escalated && (
-              <button type="button" className="w-full text-center text-sm text-copper hover:text-copper-strong" onClick={() => setView("seller")}>
+              <button type="button" className="w-full text-center text-sm text-accent hover:text-accent-strong" onClick={() => setView("seller")}>
                 Contact the seller instead
               </button>
             )}
@@ -263,7 +263,7 @@ function Bubble({ who, children }: { who: Msg["sender"]; children: React.ReactNo
       )}
       <p
         className={`max-w-[88%] whitespace-pre-line rounded-lg px-3 py-2 text-[0.95rem] ${
-          mine ? "bg-copper text-copper-ink" : who === "admin" ? "border border-copper/50 bg-raised" : "bg-raised"
+          mine ? "bg-accent text-accent-ink" : who === "admin" ? "border border-accent/50 bg-raised" : "bg-raised"
         }`}
       >
         {children}

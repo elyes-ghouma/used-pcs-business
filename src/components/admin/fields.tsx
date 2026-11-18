@@ -8,7 +8,7 @@ export function Field({
   const err = errors?.[name]?.[0];
   return (
     <div>
-      <label htmlFor={`f-${name}`} className="label">{label}{required && <span className="text-copper"> *</span>}</label>
+      <label htmlFor={`f-${name}`} className="label">{label}{required && <span className="text-accent"> *</span>}</label>
       <input
         id={`f-${name}`} name={name} type={type} defaultValue={defaultValue ?? ""} list={list} required={required}
         maxLength={maxLength} placeholder={placeholder} inputMode={inputMode} className="field"
@@ -26,7 +26,7 @@ export function Area({
   const err = errors?.[name]?.[0];
   return (
     <div>
-      <label htmlFor={`f-${name}`} className="label">{label}{required && <span className="text-copper"> *</span>}</label>
+      <label htmlFor={`f-${name}`} className="label">{label}{required && <span className="text-accent"> *</span>}</label>
       <textarea
         id={`f-${name}`} name={name} defaultValue={defaultValue ?? ""} rows={rows} required={required} maxLength={maxLength}
         placeholder={placeholder} className="field"

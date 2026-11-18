@@ -14,7 +14,7 @@ export default async function LoginPage() {
   return (
     <main id="main" className="grid min-h-dvh place-items-center px-4">
       <div className="panel w-full max-w-sm p-8">
-        <LogoMark className="size-10 text-copper" />
+        <LogoMark className="size-10 text-accent" />
         <h1 className="mt-4 text-4xl">Admin sign in</h1>
         <p className="mt-1 mb-6 text-sm text-muted">For the shop owner only.</p>
         {configured ? (
