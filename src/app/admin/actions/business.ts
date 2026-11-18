@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { randomUUID } from "node:crypto";
 import { requireAdminForAction } from "@/lib/auth";
+import { isUuid } from "@/lib/guards";
+import { reencodeToWebp } from "@/lib/image-process";
 import { detectImageKind, isValidMediaPath, MAX_IMAGE_BYTES, MEDIA_BUCKET } from "@/lib/images";
 import type { InquiryStatus } from "@/lib/types";
 import { faqSchema, flattenErrors, saleSchema, settingsSchema, testimonialSchema, type ActionState } from "@/lib/validation";
@@ -67,6 +70,7 @@ export async function recordSaleAction(_prev: ActionState, formData: FormData): 
 export async function voidSaleAction(saleId: string, formData: FormData): Promise<void> {
   const admin = await guard();
   if (!admin) return;
+  if (!isUuid(saleId)) return;
   await admin.supabase.rpc("void_sale", { p_sale_id: saleId, p_reason: str(formData, "reason").slice(0, 500) });
   revalidatePath("/admin", "layout");
   revalidatePath("/catalog");
@@ -78,6 +82,7 @@ const INQUIRY_STATUSES: InquiryStatus[] = ["new", "contacted", "negotiating", "c
 export async function updateInquiryAction(inquiryId: string, formData: FormData): Promise<void> {
   const admin = await guard();
   if (!admin) return;
+  if (!isUuid(inquiryId)) return;
   const status = str(formData, "status") as InquiryStatus;
   if (!INQUIRY_STATUSES.includes(status)) return;
   await admin.supabase
@@ -131,9 +136,25 @@ export async function registerLogoAction(path: string): Promise<{ ok: boolean; m
     await admin.supabase.storage.from(MEDIA_BUCKET).remove([path]);
     return { ok: false, message: "That file is not a valid JPG, PNG or WebP image under 5 MB." };
   }
+  // Same rule as product photos: serve only a freshly re-encoded WebP under a server-generated name.
+  let clean: Buffer;
+  try {
+    clean = await reencodeToWebp(Buffer.from(await blob.arrayBuffer()));
+  } catch {
+    await admin.supabase.storage.from(MEDIA_BUCKET).remove([path]);
+    return { ok: false, message: "That file could not be read as an image." };
+  }
+  const cleanPath = `branding/${randomUUID()}.webp`;
+  const { error: uploadError } = await admin.supabase.storage.from(MEDIA_BUCKET).upload(cleanPath, clean, { contentType: "image/webp", upsert: false });
+  await admin.supabase.storage.from(MEDIA_BUCKET).remove([path]);
+  if (uploadError) return { ok: false, message: "Could not store the logo." };
+
   const { data: old } = await admin.supabase.from("business_settings").select("logo_path").eq("id", 1).single();
-  const { error } = await admin.supabase.from("business_settings").update({ logo_path: path }).eq("id", 1);
-  if (error) return { ok: false, message: "Could not save the logo." };
+  const { error } = await admin.supabase.from("business_settings").update({ logo_path: cleanPath }).eq("id", 1);
+  if (error) {
+    await admin.supabase.storage.from(MEDIA_BUCKET).remove([cleanPath]);
+    return { ok: false, message: "Could not save the logo." };
+  }
   if (old?.logo_path) await admin.supabase.storage.from(MEDIA_BUCKET).remove([old.logo_path]);
   revalidatePath("/", "layout");
   return { ok: true };
@@ -152,6 +173,7 @@ export async function removeLogoAction(): Promise<void> {
 export async function saveFaqAction(id: string | null, formData: FormData): Promise<void> {
   const admin = await guard();
   if (!admin) return;
+  if (id !== null && !isUuid(id)) return;
   const parsed = faqSchema.safeParse({ question: str(formData, "question"), answer: str(formData, "answer"), keywords: str(formData, "keywords") });
   if (!parsed.success) return;
   const row = { ...parsed.data, is_published: formData.get("is_published") === "on", sort_order: Number(str(formData, "sort_order")) || 0 };
@@ -164,6 +186,7 @@ export async function saveFaqAction(id: string | null, formData: FormData): Prom
 export async function deleteFaqAction(id: string): Promise<void> {
   const admin = await guard();
   if (!admin) return;
+  if (!isUuid(id)) return;
   await admin.supabase.from("faqs").delete().eq("id", id);
   revalidatePath("/admin/settings");
   revalidatePath("/");
@@ -172,6 +195,7 @@ export async function deleteFaqAction(id: string): Promise<void> {
 export async function saveTestimonialAction(id: string | null, formData: FormData): Promise<void> {
   const admin = await guard();
   if (!admin) return;
+  if (id !== null && !isUuid(id)) return;
   const parsed = testimonialSchema.safeParse({ author_name: str(formData, "author_name"), body: str(formData, "body") });
   if (!parsed.success) return;
   const row = { ...parsed.data, is_published: formData.get("is_published") === "on", sort_order: Number(str(formData, "sort_order")) || 0 };
@@ -184,6 +208,7 @@ export async function saveTestimonialAction(id: string | null, formData: FormDat
 export async function deleteTestimonialAction(id: string): Promise<void> {
   const admin = await guard();
   if (!admin) return;
+  if (!isUuid(id)) return;
   await admin.supabase.from("testimonials").delete().eq("id", id);
   revalidatePath("/admin/settings");
   revalidatePath("/");
@@ -193,6 +218,7 @@ export async function deleteTestimonialAction(id: string): Promise<void> {
 export async function sendReplyAction(conversationId: string, body: string): Promise<{ ok: boolean; message?: string }> {
   const admin = await guard();
   if (!admin) return { ok: false, message: EXPIRED.message };
+  if (!isUuid(conversationId) || typeof body !== "string") return { ok: false, message: "Invalid conversation." };
   const text = body.trim();
   if (text.length < 1 || text.length > 2000) return { ok: false, message: "Write a reply between 1 and 2000 characters." };
   const { error } = await admin.supabase.from("messages").insert({ conversation_id: conversationId, sender: "admin", body: text });
@@ -202,6 +228,7 @@ export async function sendReplyAction(conversationId: string, body: string): Pro
 export async function setConversationStatusAction(conversationId: string, status: "open" | "resolved"): Promise<{ ok: boolean }> {
   const admin = await guard();
   if (!admin) return { ok: false };
+  if (!isUuid(conversationId) || (status !== "open" && status !== "resolved")) return { ok: false };
   const { error } = await admin.supabase
     .from("conversations")
     .update({ status, resolved_at: status === "resolved" ? new Date().toISOString() : null, ...(status === "resolved" ? { needs_attention: false } : {}) })

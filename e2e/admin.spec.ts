@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
-import { ADMIN_STATE } from "./state";
+import { expect, newVisitor, test } from "./fixtures";
+import { ADMIN_STATE, LOGOUT_STATE } from "./state";
 
 /**
  * Full business workflow against a real (test) Supabase project.
@@ -83,7 +83,7 @@ test.describe("owner workflow", () => {
   });
 
   test("a visitor inquiry reaches the admin, who updates its status", async ({ page, browser }) => {
-    const visitor = await (await browser.newContext()).newPage();
+    const visitor = await (await newVisitor(browser)).newPage();
     await visitor.goto(`/pcs/${slug}`);
     await visitor.getByLabel("Your name").fill(`E2E Visitor ${run}`);
     await visitor.getByLabel("Phone").fill("20123456");
@@ -105,7 +105,7 @@ test.describe("owner workflow", () => {
   });
 
   test("chat: visitor asks for the seller, admin replies in the inbox, visitor sees the reply", async ({ page, browser }) => {
-    const visitor = await (await browser.newContext()).newPage();
+    const visitor = await (await newVisitor(browser)).newPage();
     await visitor.goto(`/pcs/${slug}`);
     await visitor.getByRole("button", { name: "Open chat" }).click();
     const dialog = visitor.getByRole("dialog", { name: "Chat" });
@@ -147,7 +147,7 @@ test.describe("owner workflow", () => {
     await expect(page.getByText("Recorded sales")).toBeVisible();
   });
 
-  test("cleanup: void the sale and archive the product; signing out ends the session", async ({ page }) => {
+  test("cleanup: void the sale and archive the product", async ({ page }) => {
     await page.goto("/admin/sales?q=" + encodeURIComponent(NAME));
     const sale = page.getByRole("listitem").filter({ hasText: NAME });
     await sale.getByText("Undo this sale").click();
@@ -159,9 +159,20 @@ test.describe("owner workflow", () => {
     await page.getByRole("button", { name: "Archive", exact: true }).click();
     await expect(page.getByText("Archived", { exact: true })).toBeVisible();
 
+  });
+});
+
+test.describe("sign out", () => {
+  test.use({ storageState: LOGOUT_STATE });
+
+  test("signing out ends the session for good", async ({ page }) => {
+    await page.goto("/admin");
+    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
     await page.getByRole("button", { name: "Sign out" }).first().click();
     await expect(page).toHaveURL(/\/admin\/login/);
     await page.goto("/admin");
+    await expect(page).toHaveURL(/\/admin\/login/);
+    await page.goto("/admin/products");
     await expect(page).toHaveURL(/\/admin\/login/);
   });
 });

@@ -11,7 +11,9 @@ const items = [
   { href: "/admin/sales", label: "Sales" },
   { href: "/admin/inquiries", label: "Inquiries", badge: "inquiries" as const },
   { href: "/admin/inbox", label: "Chat inbox", badge: "inbox" as const },
+  { href: "/admin/activity", label: "Activity" },
   { href: "/admin/settings", label: "Settings" },
+  { href: "/admin/account", label: "Account" },
 ];
 
 export function AdminNav({ badges }: { badges: { inquiries: number; inbox: number } }) {

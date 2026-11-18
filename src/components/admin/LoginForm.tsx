@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction } from "@/app/admin/actions/auth";
 import type { ActionState } from "@/lib/validation";
@@ -20,6 +21,7 @@ export function LoginForm() {
         <input id="password" name="password" type="password" autoComplete="current-password" required className="field" />
       </div>
       <button type="submit" className="btn-primary w-full" disabled={pending}>{pending ? "Signing in..." : "Sign in"}</button>
+      <p className="text-sm"><Link href="/admin/forgot-password" className="text-accent hover:text-accent-strong">Forgot your password?</Link></p>
     </form>
   );
 }

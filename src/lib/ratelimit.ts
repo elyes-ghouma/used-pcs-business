@@ -29,6 +29,17 @@ export function isSameOrigin(request: Request): boolean {
   }
 }
 
-export function clientIp(headers: Headers): string {
-  return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || "unknown";
+export { clientIp } from "./client-id";
+
+/** Reads a JSON body with a hard size cap, so oversized payloads are refused before parsing. */
+export async function readJsonLimited(request: Request, maxBytes = 8_192): Promise<unknown | null> {
+  const declared = Number(request.headers.get("content-length") ?? 0);
+  if (declared > maxBytes) return null;
+  const text = await request.text().catch(() => "");
+  if (text.length === 0 || text.length > maxBytes) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }

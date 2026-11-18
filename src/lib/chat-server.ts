@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { createPublicClient } from "@/lib/supabase/public";
+import { createGatewayClient } from "@/lib/gateway";
 
 export const CHAT_COOKIE = "chat_token";
 
@@ -20,7 +20,8 @@ export async function readToken(): Promise<string | null> {
 }
 
 export async function startConversation(productId: string | null): Promise<string> {
-  const { data, error } = await createPublicClient().rpc("chat_start", { p_product_id: productId });
+  const db = await createGatewayClient();
+  const { data, error } = await db.rpc("chat_start", { p_product_id: productId });
   if (error || !data?.token) throw new Error(error?.message ?? "chat_start_failed");
   (await cookies()).set(CHAT_COOKIE, data.token, {
     httpOnly: true,
@@ -33,7 +34,8 @@ export async function startConversation(productId: string | null): Promise<strin
 }
 
 export async function fetchState(token: string, after: number): Promise<ChatState | null> {
-  const { data, error } = await createPublicClient().rpc("chat_get_messages", { p_token: token, p_after: after });
+  const db = await createGatewayClient();
+  const { data, error } = await db.rpc("chat_get_messages", { p_token: token, p_after: after });
   if (error) {
     if (/conversation_not_found/.test(error.message)) return null;
     throw new Error(error.message);

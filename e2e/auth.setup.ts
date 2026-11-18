@@ -1,7 +1,7 @@
 import { expect, test as setup } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
-import { ADMIN_STATE } from "./state";
+import { ADMIN_STATE, LOGOUT_STATE } from "./state";
 
 /** Signs in once through the real login form and saves the session for the admin tests (the login limiter allows 8 tries / 10 min). */
 setup("sign in as admin", async ({ page }) => {
@@ -17,4 +17,15 @@ setup("sign in as admin", async ({ page }) => {
 
   fs.mkdirSync(path.dirname(ADMIN_STATE), { recursive: true });
   await page.context().storageState({ path: ADMIN_STATE });
+
+  // A second login for the sign-out test (a global sign-out would otherwise end the shared session).
+  const second = await page.context().browser()!.newContext();
+  const p2 = await second.newPage();
+  await p2.goto("/admin/login");
+  await p2.getByLabel("Email").fill(email!);
+  await p2.getByLabel("Password").fill(password!);
+  await p2.getByRole("button", { name: "Sign in" }).click();
+  await expect(p2.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+  await second.storageState({ path: LOGOUT_STATE });
+  await second.close();
 });

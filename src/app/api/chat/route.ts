@@ -4,8 +4,9 @@ import { respond } from "@/lib/chatbot/engine";
 import type { BotContext } from "@/lib/chatbot/types";
 import { fetchState, readToken, startConversation } from "@/lib/chat-server";
 import { getAllVisibleProducts, getFaqs, getSettings } from "@/lib/data";
-import { clientIp, isSameOrigin, rateLimit } from "@/lib/ratelimit";
-import { createPublicClient, isSupabaseConfigured } from "@/lib/supabase/public";
+import { createGatewayClient, isGatewayConfigured } from "@/lib/gateway";
+import { clientIp, isSameOrigin, rateLimit, readJsonLimited } from "@/lib/ratelimit";
+import { isSupabaseConfigured } from "@/lib/supabase/public";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ const fail = (status: number, error: string) => NextResponse.json({ error }, { s
 
 /** Poll for new messages (e.g. a reply from the seller). */
 export async function GET(request: Request) {
-  if (!isSupabaseConfigured()) return fail(503, "not_configured");
+  if (!isSupabaseConfigured() || !isGatewayConfigured()) return fail(503, "not_configured");
   if (!rateLimit(`chat-get:${clientIp(request.headers)}`, 60, 60_000)) return fail(429, "rate_limited");
   const after = Math.max(0, Number(new URL(request.url).searchParams.get("after")) || 0);
   const token = await readToken();
@@ -36,13 +37,13 @@ export async function GET(request: Request) {
 /** A visitor message: stored, then answered by the deterministic bot unless the seller has been called in. */
 export async function POST(request: Request) {
   if (!isSameOrigin(request)) return fail(403, "forbidden");
-  if (!isSupabaseConfigured()) return fail(503, "not_configured");
+  if (!isSupabaseConfigured() || !isGatewayConfigured()) return fail(503, "not_configured");
   if (!rateLimit(`chat-post:${clientIp(request.headers)}`, 20, 60_000)) return fail(429, "rate_limited");
 
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  const parsed = bodySchema.safeParse(await readJsonLimited(request));
   if (!parsed.success) return fail(400, "invalid_message");
   const { message, after, productId } = parsed.data;
-  const db = createPublicClient();
+  const db = await createGatewayClient();
 
   try {
     let token = await readToken();

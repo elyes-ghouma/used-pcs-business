@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { fetchState, readToken, startConversation } from "@/lib/chat-server";
-import { clientIp, isSameOrigin, rateLimit } from "@/lib/ratelimit";
-import { createPublicClient, isSupabaseConfigured } from "@/lib/supabase/public";
+import { createGatewayClient, isGatewayConfigured } from "@/lib/gateway";
+import { clientIp, isSameOrigin, rateLimit, readJsonLimited } from "@/lib/ratelimit";
+import { isSupabaseConfigured } from "@/lib/supabase/public";
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +17,11 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   if (!isSameOrigin(request)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  if (!isSupabaseConfigured()) return NextResponse.json({ error: "not_configured" }, { status: 503 });
+  if (!isSupabaseConfigured() || !isGatewayConfigured()) return NextResponse.json({ error: "not_configured" }, { status: 503 });
   if (!rateLimit(`chat-escalate:${clientIp(request.headers)}`, 5, 10 * 60_000)) {
     return NextResponse.json({ error: "rate_limited", message: "Too many requests. Please wait a few minutes." }, { status: 429 });
   }
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(await readJsonLimited(request));
   if (!parsed.success) {
     return NextResponse.json({ error: "invalid", message: parsed.error.issues[0]?.message ?? "Check your details." }, { status: 400 });
   }
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
   try {
     let token = await readToken();
     if (!token) token = await startConversation(productId);
-    const db = createPublicClient();
+    const db = await createGatewayClient();
     let res = await db.rpc("chat_escalate", { p_token: token, p_name: name, p_contact: contact, p_message: message });
     if (res.error && /conversation_not_found/.test(res.error.message)) {
       token = await startConversation(productId);

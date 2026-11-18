@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { clientIp, rateLimit } from "@/lib/ratelimit";
-import { createPublicClient, isSupabaseConfigured } from "@/lib/supabase/public";
+import { createGatewayClient, isGatewayConfigured } from "@/lib/gateway";
+import { clientIp, isSameOrigin, rateLimit, readJsonLimited } from "@/lib/ratelimit";
+import { isSupabaseConfigured } from "@/lib/supabase/public";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +13,16 @@ const schema = z.object({
 
 /** Records that a contact button was clicked. This is NOT a received message: we cannot see WhatsApp/Messenger. */
 export async function POST(request: Request) {
-  if (!isSupabaseConfigured() || !rateLimit(`track:${clientIp(request.headers)}`, 30, 60_000)) return new NextResponse(null, { status: 204 });
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const quiet = new NextResponse(null, { status: 204 });
+  if (!isSameOrigin(request) || !isSupabaseConfigured() || !isGatewayConfigured()) return quiet;
+  if (!rateLimit(`track:${clientIp(request.headers)}`, 30, 60_000)) return quiet;
+  const parsed = schema.safeParse(await readJsonLimited(request, 1_024));
   if (parsed.success) {
-    await createPublicClient().rpc("track_contact_event", { p_product_id: parsed.data.productId, p_channel: parsed.data.channel });
+    try {
+      await (await createGatewayClient()).rpc("track_contact_event", { p_product_id: parsed.data.productId, p_channel: parsed.data.channel });
+    } catch {
+      // tracking must never break the page
+    }
   }
-  return new NextResponse(null, { status: 204 });
+  return quiet;
 }

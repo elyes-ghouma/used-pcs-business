@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test.describe("public website", () => {
   test("home page renders and has no horizontal scroll", async ({ page }) => {

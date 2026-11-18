@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+# Least privilege: CI only needs to read the repository.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -12,9 +16,11 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the secret scan reads the whole git history
 
       - uses: actions/setup-node@v4
         with:
@@ -30,9 +36,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Includes the SQL tests: every migration is applied to an in-process Postgres (PGlite)
-      # and RLS, admin-only functions, sales and chat rules are asserted. No secrets needed.
-      - name: Unit and database tests
+      # Includes the SQL tests: every migration is applied to an in-process Postgres (PGlite) and RLS, admin-only
+      # functions, the gateway key, rate limits, audit log, sales and chat rules are asserted. No secrets needed.
+      - name: Unit, security and database tests
         run: npm test
 
       # The production build must work with NO Supabase variables: database pages render on request.
@@ -40,3 +46,16 @@ jobs:
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
+
+      # Fails on: committed env files, Supabase secret / service-role keys, the gateway key in the browser bundle or history.
+      - name: Secret scan (source, git history, browser bundle)
+        run: npm run security:scan
+
+      # Production dependencies must have no high or critical known vulnerabilities.
+      - name: Dependency audit (production)
+        run: npm audit --omit=dev --audit-level=high
+
+      # Informational: dev tooling advisories are reported but do not block (nothing from devDependencies is shipped).
+      - name: Dependency audit (all, informational)
+        run: npm audit --audit-level=high
+        continue-on-error: true

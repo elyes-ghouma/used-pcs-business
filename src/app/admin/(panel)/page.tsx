@@ -3,6 +3,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
 import { getSettings } from "@/lib/data";
 import { formatDate, formatPrice } from "@/lib/format";
+import { hoursAgoIso } from "@/lib/time";
 import { INQUIRY_STATUS_LABEL, type InquiryStatus, type ProductStatus } from "@/lib/types";
 
 type Stats = {
@@ -24,12 +25,14 @@ function Stat({ label, value, href, tone }: { label: string; value: string | num
 export default async function DashboardPage() {
   const { supabase } = await requireAdmin();
   const settings = await getSettings();
-  const [statsRes, interestRes, inquiries, sales, products] = await Promise.all([
+  const since24h = hoursAgoIso(24);
+  const [statsRes, interestRes, inquiries, sales, products, failedLogins] = await Promise.all([
     supabase.rpc("admin_dashboard_stats"),
     supabase.rpc("admin_product_interest"),
     supabase.from("inquiries").select("id, name, product_name, status, created_at").order("created_at", { ascending: false }).limit(5),
     supabase.from("sales").select("id, product_name, sale_price, sold_at, is_voided").order("sold_at", { ascending: false }).limit(5),
     supabase.from("products").select("id, name, status, created_at").eq("is_archived", false).order("created_at", { ascending: false }).limit(5),
+    supabase.from("security_events").select("id", { count: "exact", head: true }).in("type", ["login_failed", "login_throttled"]).gte("at", since24h),
   ]);
   const stats = statsRes.data as Stats | null;
   const interest = (interestRes.data ?? []) as { product_id: string; product_name: string; inquiries: number; contact_clicks: number; chats: number }[];
@@ -46,6 +49,12 @@ export default async function DashboardPage() {
         <h1 className="text-5xl">Dashboard</h1>
         <p className="mt-1 text-muted">A quick look at stock, sales and customers.</p>
       </div>
+
+      {(failedLogins.count ?? 0) >= 5 && (
+        <p role="alert" className="rounded-md border border-warn/50 bg-warn/10 px-4 py-3 text-warn">
+          {failedLogins.count} failed or blocked sign-in attempts in the last 24 hours. See <Link href="/admin/activity" className="underline">Activity</Link>; if it was not you, change your password in Account.
+        </p>
+      )}
 
       <section aria-label="Key numbers" className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Total products" value={stats.products_total} href="/admin/products" />

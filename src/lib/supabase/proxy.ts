@@ -21,7 +21,8 @@ export async function updateSession(request: NextRequest) {
 
   const { data } = await supabase.auth.getClaims();
   const path = request.nextUrl.pathname;
-  if (!data?.claims && path.startsWith("/admin") && path !== "/admin/login") {
+  const isPublicAdminPath = path === "/admin/login" || path === "/admin/forgot-password";
+  if (!data?.claims && path.startsWith("/admin") && !isPublicAdminPath) {
     const redirect = request.nextUrl.clone();
     redirect.pathname = "/admin/login";
     redirect.search = "";

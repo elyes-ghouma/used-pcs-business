@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { randomUUID } from "node:crypto";
 import { requireAdminForAction } from "@/lib/auth";
+import { isUuid } from "@/lib/guards";
+import { reencodeToWebp } from "@/lib/image-process";
 import { detectImageKind, isValidMediaPath, MAX_IMAGES_PER_PRODUCT, MAX_IMAGE_BYTES, MEDIA_BUCKET } from "@/lib/images";
 import { makeProductSlug } from "@/lib/slug";
 import type { ProductStatus } from "@/lib/types";
@@ -52,6 +55,7 @@ export async function createProductAction(_prev: ActionState, formData: FormData
 export async function updateProductAction(productId: string, _prev: ActionState, formData: FormData): Promise<ActionState> {
   const admin = await guard();
   if (!admin) return EXPIRED;
+  if (!isUuid(productId)) return { ok: false, message: "Invalid product." };
   const parsed = parseProductForm(formData);
   if (!parsed.success) return { ok: false, message: "Please fix the highlighted fields.", fieldErrors: flattenErrors(parsed.error) };
 
@@ -64,6 +68,8 @@ export async function updateProductAction(productId: string, _prev: ActionState,
 export async function setStatusAction(productId: string, status: ProductStatus, formData?: FormData): Promise<void> {
   const admin = await guard();
   if (!admin) return;
+  // ("sold" is only reachable through record_sale; the database refuses it here too.)
+  if (!isUuid(productId) || (status !== "available" && status !== "reserved")) return;
   const note = formData ? String(formData.get("note") ?? "").slice(0, 300) : "";
   await admin.supabase.rpc("set_product_status", { p_product_id: productId, p_status: status, p_note: note || null });
   refresh();
@@ -72,6 +78,7 @@ export async function setStatusAction(productId: string, status: ProductStatus, 
 export async function archiveProductAction(productId: string, archived: boolean): Promise<void> {
   const admin = await guard();
   if (!admin) return;
+  if (!isUuid(productId) || typeof archived !== "boolean") return;
   const { data } = await admin.supabase.from("products").update({ is_archived: archived }).eq("id", productId).select("slug").single();
   refresh(data?.slug);
 }
@@ -79,6 +86,7 @@ export async function archiveProductAction(productId: string, archived: boolean)
 export async function deleteProductAction(productId: string): Promise<ActionState> {
   const admin = await guard();
   if (!admin) return EXPIRED;
+  if (!isUuid(productId)) return { ok: false, message: "Invalid product." };
   const { data: images } = await admin.supabase.from("product_images").select("storage_path").eq("product_id", productId);
   const { error } = await admin.supabase.from("products").delete().eq("id", productId);
   if (error) {
@@ -97,7 +105,7 @@ export async function deleteProductAction(productId: string): Promise<ActionStat
 export async function registerImageAction(productId: string, path: string): Promise<{ ok: boolean; message?: string }> {
   const admin = await guard();
   if (!admin) return { ok: false, message: EXPIRED.message };
-  if (!isValidMediaPath(path, `products/${productId}`)) return { ok: false, message: "Invalid upload path." };
+  if (!isUuid(productId) || !isValidMediaPath(path, `products/${productId}`)) return { ok: false, message: "Invalid upload path." };
 
   const { count } = await admin.supabase.from("product_images").select("id", { count: "exact", head: true }).eq("product_id", productId);
   if ((count ?? 0) >= MAX_IMAGES_PER_PRODUCT) {
@@ -113,15 +121,29 @@ export async function registerImageAction(productId: string, path: string): Prom
     return { ok: false, message: "That file is not a valid JPG, PNG or WebP image under 5 MB." };
   }
 
+  // Never serve what the browser uploaded: decode it and write a fresh WebP under a server-generated name.
+  // This drops EXIF/GPS data and any payload hidden in the file; undecodable files are rejected.
+  let clean: Buffer;
+  try {
+    clean = await reencodeToWebp(Buffer.from(await blob.arrayBuffer()));
+  } catch {
+    await admin.supabase.storage.from(MEDIA_BUCKET).remove([path]);
+    return { ok: false, message: "That file could not be read as an image." };
+  }
+  const cleanPath = `products/${productId}/${randomUUID()}.webp`;
+  const { error: uploadError } = await admin.supabase.storage.from(MEDIA_BUCKET).upload(cleanPath, clean, { contentType: "image/webp", upsert: false });
+  await admin.supabase.storage.from(MEDIA_BUCKET).remove([path]); // the original never stays
+  if (uploadError) return { ok: false, message: "Could not store the image." };
+
   const { data: last } = await admin.supabase.from("product_images").select("position").eq("product_id", productId).order("position", { ascending: false }).limit(1);
   const { error: insertError } = await admin.supabase.from("product_images").insert({
     product_id: productId,
-    storage_path: path,
+    storage_path: cleanPath,
     position: (last?.[0]?.position ?? -1) + 1,
     is_primary: (count ?? 0) === 0,
   });
   if (insertError) {
-    await admin.supabase.storage.from(MEDIA_BUCKET).remove([path]);
+    await admin.supabase.storage.from(MEDIA_BUCKET).remove([cleanPath]);
     return { ok: false, message: "Could not attach the image." };
   }
   refresh();
@@ -131,6 +153,7 @@ export async function registerImageAction(productId: string, path: string): Prom
 export async function deleteImageAction(imageId: string): Promise<{ ok: boolean }> {
   const admin = await guard();
   if (!admin) return { ok: false };
+  if (!isUuid(imageId)) return { ok: false };
   const { data: image } = await admin.supabase.from("product_images").select("id, product_id, storage_path, is_primary").eq("id", imageId).single();
   if (!image) return { ok: false };
   await admin.supabase.from("product_images").delete().eq("id", imageId);
@@ -146,6 +169,7 @@ export async function deleteImageAction(imageId: string): Promise<{ ok: boolean 
 export async function setPrimaryImageAction(productId: string, imageId: string): Promise<{ ok: boolean }> {
   const admin = await guard();
   if (!admin) return { ok: false };
+  if (!isUuid(productId) || !isUuid(imageId)) return { ok: false };
   // Two steps because only one primary per product is allowed (unique partial index).
   await admin.supabase.from("product_images").update({ is_primary: false }).eq("product_id", productId).eq("is_primary", true);
   const { error } = await admin.supabase.from("product_images").update({ is_primary: true }).eq("id", imageId).eq("product_id", productId);
@@ -156,6 +180,7 @@ export async function setPrimaryImageAction(productId: string, imageId: string):
 export async function reorderImagesAction(productId: string, orderedIds: string[]): Promise<{ ok: boolean }> {
   const admin = await guard();
   if (!admin) return { ok: false };
+  if (!isUuid(productId) || !Array.isArray(orderedIds) || orderedIds.length > MAX_IMAGES_PER_PRODUCT || !orderedIds.every(isUuid)) return { ok: false };
   await Promise.all(
     orderedIds.map((id, position) => admin.supabase.from("product_images").update({ position }).eq("id", id).eq("product_id", productId)),
   );
